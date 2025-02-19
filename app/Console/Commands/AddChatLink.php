@@ -27,28 +27,28 @@ class AddChatLink extends Command
             return;
         }
 
-        if ($this->getUpdate()->message->chat->type == 'chat') 
-        {
+        $typeChat = $this->getUpdate()->message->chat->type;
 
-        // Получаем пригласительную ссылку из сообщения
-        $inviteLink = $this->argument('link', 'error');
+        if ($typeChat == 'chat' || $typeChat == 'group' || $typeChat == 'supergroup') {
 
-        // Сохраняем ссылку в базу данных
-        Chat::where('chat_id', $this->getUpdate()->message->chat->id)->update([
-            'chat_link' => $inviteLink,
-        ]);
+            $inviteLink = $this->argument('link', 'error');
 
-        $response = "Пригласительная ссылка успешно добавлена в базу данных.";
-        $telegram->sendMessage([
-            'chat_id' => $this->getUpdate()->message->chat->id,
-            'text' => $response,
-        ]);
-    }else{
-        $telegram->sendMessage([
-            'chat_id' => $this->getUpdate()->message->chat->id,
-            'text' => "Вы не можете в личном сообщении менять ссылку на чат",
-        ]);
+            // Сохраняем ссылку в базу данных
+            Chat::where('chat_id', $this->getUpdate()->message->chat->id)->update([
+                'chat_link' => $inviteLink,
+            ]);
+
+            $response = "Пригласительная ссылка успешно добавлена в базу данных.";
+            $telegram->sendMessage([
+                'chat_id' => $this->getUpdate()->message->chat->id,
+                'text' => $response,
+            ]);
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $this->getUpdate()->message->chat->id,
+                'text' => "Вы не можете в личном сообщении менять ссылку на чат",
+            ]);
+        }
     }
-}
 
 }

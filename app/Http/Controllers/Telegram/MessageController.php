@@ -11,35 +11,54 @@ class MessageController extends Controller
 {
     protected BotsManager $botsManager;
 
-    public function __construct(BotsManager $botsManager){
+    public function __construct(BotsManager $botsManager)
+    {
         $this->botsManager = $botsManager;
     }
 
-    public function __invoke(){
+    public function __invoke()
+    {
         $telegram = new Api(config('telegram.bot_token'));
         $this->botsManager->bot()->commandsHandler(true);
         $update = $telegram->getWebhookUpdate();
-    
+
         $botChatId = $update?->myChatMember?->newChatMember?->user?->id;
-
         $isLeft = $update?->myChatMember?->newChatMember?->status == 'left';
-        
-        if ($botChatId) {
-            $chatId = $update->myChatMember->chat->id;
-            $chat_name = $update->myChatMember->chat->title;
 
-           if ($isLeft) {               
-                Chat::where('chat_id',$chatId)->delete();
-                return response('Чат удален', 200);
-            }
-            $chatExists = Chat::where('chat_id', $chatId)->exists();
-            if (!$chatExists) {
-                Chat::create(['name' => $chat_name, 'chat_id' => $chatId]);
-                return response('Чат добавлен', 200);
+        // Проверка на наличие сообщений в чате
+        if ($update->message?->text) {
+            $messageText = $update->message->text;
+
+            // Проверка на наличие хэштегов
+            if (strpos($messageText, '#митрепорт') !== false || strpos($messageText, '#еженедельныйотчет') !== false) {
+                return response('Сообщение содержит хэштеги: #митрепорт или #еженедельныйотчет', 200);
             }
         }
 
-    
+        if ($botChatId) {
+            if ($update->myChatMember->from->id == env('TELEGRAM_USER_ADMIN_ID')) {
+                $chatId = $update->myChatMember->chat->id;
+                $chat_name = $update->myChatMember->chat->title;
+                if ($isLeft) {
+                    Chat::where('chat_id', $chatId)->delete();
+                    return response('Чат удален', 200);
+                }
+                $chatExists = Chat::where('chat_id', $chatId)->exists();
+                if (!$chatExists) {
+                    Chat::create(['name' => $chat_name, 'chat_id' => $chatId]);
+                    return response('Чат добавлен', 200);
+                }
+                $chatId = $update?->myChatMember?->chat?->id;
+
+            } else {
+                if (!$isLeft) {
+                    $telegram->leaveChat(['chat_id' => $update->myChatMember->chat->id]);
+                    $chatId = null;
+                    return response('Бот покинул чат', 200);
+                }
+            }
+        }
+
         return response(null, 200);
     }
 
