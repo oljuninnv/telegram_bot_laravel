@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Telegram;
 use App\Http\Controllers\Controller;
 use Telegram\Bot\Api;
 use App\Models\Chat;
+use App\Models\Hashtag;
 use Telegram\Bot\BotsManager;
-use Telegram\Bot\Laravel\Facades\Telegram;
-use Telegram\Bot\Keyboard\Keyboard;
 
 class MessageController extends Controller
 {
@@ -35,17 +34,11 @@ class MessageController extends Controller
         // Проверка, покинул ли бот чат
         $isLeft = $update?->myChatMember?->newChatMember?->status == 'left';
 
-        // Проверка на наличие текста в сообщении
-        if ($update->message?->text) {
-            $messageText = $update->message->text;
-            // Проверка на наличие хэштегов в сообщении
-            if (strpos($messageText, '#митрепорт') !== false || strpos($messageText, '#еженедельныйотчет') !== false) {
-                return response('Сообщение содержит хэштеги: #митрепорт или #еженедельныйотчет', 200);
-            }
-        }
+        // Проверка, является ли данный чат приватным
+        $isPrivate = $update?->myChatMember?->chat?->type == 'private';
 
-        // Проверка, был ли бот добавлен в чат
-        if ($botChatId) {
+        // Проверка, был ли бот добавлен в чат и то,что чат не является приватным
+        if ($botChatId && !$isPrivate) {
             // Проверка, является ли пользователь, добавивший бота, администратором
             if ($update->myChatMember->from->id == env('TELEGRAM_USER_ADMIN_ID')) {
                 $chatId = $update->myChatMember->chat->id;
@@ -76,12 +69,64 @@ class MessageController extends Controller
             }
         }
 
-        // Возвращает пустой ответ, если ни одно из условий не выполнено
+        // Проверка на наличие текста в сообщении
+        if ($update->message?->text) {
+            $messageText = $update->message->text;
+            $hashtags = Hashtag::where('hashtag', $messageText)->first();
+            if ($hashtags) {
+                $telegram->sendMessage([
+                    'chat_id' => $update->message->chat->id,
+                    'text' => 'Сообщение содержит хэштег - '. $hashtags['hashtag'],
+                ]);
+                return response('Сообщение содержит хэштеги', 200);
+            }
+
+            $isBotCommand = false;
+
+            // Проверка является ли текст командой
+            if (!empty($update->message->entities)) {
+                foreach ($update->message->entities as $entity) {
+                    if ($entity->type === 'bot_command') {
+                        $isBotCommand = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$isBotCommand && $update->message->from->id == env('TELEGRAM_USER_ADMIN_ID')){
+                switch ($messageText) {
+                    case 'Настройка сбора отчетов':
+                        $response = 'Вы выбрали настройку сбора отчетов.';
+                        break;
+                    case 'Проверить отчеты':
+                        $response = 'Вы выбрали проверку отчетов.';
+                        break;
+                    case 'Получить отчеты':
+                        $response = 'Вы выбрали получение отчетов.';
+                        break;
+                    case 'Получить список чатов':
+                        $chats = Chat::all();
+                        $response = '';
+                        foreach ($chats as $chat) {
+                            $response .= "\nНазвание: {$chat->name} - ссылка: " . (!empty($chat->chat_link) ? $chat->chat_link : 'отсутствует');
+                        }
+                        break;
+                        case 'Помощь':
+                            $response = "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
+                                        "1. **Настройка сбора отчетов** - Позволяет настроить параметры сбора отчетов.\n" .
+                                        "2. **Проверить отчеты** - Проверяет текущие отчеты и их статус.\n" .
+                                        "3. **Получить отчеты** - Получает и отображает отчеты по заданным параметрам.\n" .
+                                        "4. **Получить список чатов** - Выводит список всех доступных чатов с их названиями и ссылками.\n\n" ;
+                            break;         
+                }
+    
+                $telegram->sendMessage([
+                    'chat_id' => $update->message->chat->id,
+                    'text' => $response,
+                ]);
+            }
+        }
+
         return response(null, 200);
     }
-
-    // public function __invoke(){
-    //     $this->botsManager->bot()->commandsHandler(true);
-    //     return response(null,200);
-    // }
 }

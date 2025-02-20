@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Api;
-use App\Keyboards; // Убедитесь, что пространство имен указано правильно
+use App\Keyboards;
 
 class StartCommand extends Command
 {
@@ -32,7 +32,7 @@ class StartCommand extends Command
         $telegram->sendMessage([
             'chat_id' => $chatId,
             'text' => $response,
-            'reply_markup' => Keyboards::adminKeyboard() // Добавляем клавиатуру
+            'reply_markup' => Keyboards::mainAdminKeyboard() // Добавляем клавиатуру
         ]);
     }
 }

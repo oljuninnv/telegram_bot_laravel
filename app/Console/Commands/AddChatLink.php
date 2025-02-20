@@ -10,7 +10,7 @@ class AddChatLink extends Command
 {
     protected string $name = 'add_chat_link';
     protected string $pattern = '{link}';
-    protected string $description = 'Добавить пригласительную ссылку в базу данных';
+    protected string $description = 'Добавить пригласительную ссылку в базу данных (доступна только при вызове в чате)';
 
     public function handle()
     {
