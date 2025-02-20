@@ -41,7 +41,7 @@ return [
             'allowed_updates' => null,
             'commands' => [
                 \App\Console\Commands\StartCommand::class,
-                // \App\Console\Commands\AddChatLink::class,
+                \App\Console\Commands\AddChatLink::class,
             ],
         ],
 

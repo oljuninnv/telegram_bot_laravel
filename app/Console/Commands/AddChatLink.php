@@ -33,7 +33,6 @@ class AddChatLink extends Command
 
             $inviteLink = $this->argument('link', 'null');
 
-            // Сохраняем ссылку в базу данных
             Chat::where('chat_id', $this->getUpdate()->message->chat->id)->update([
                 'chat_link' => $inviteLink,
             ]);

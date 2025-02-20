@@ -5,11 +5,13 @@ namespace App\Handlers;
 use Telegram\Bot\Api;
 use App\Models\Chat;
 use App\Models\Hashtag;
+use Telegram\Bot\BotsManager;
 
 class ChatEventHandler
 {
-    public function handle(Api $telegram, $update)
+    public function handle(Api $telegram, $update, BotsManager $botsManager)
     {
+        $botsManager->bot()->commandsHandler(true);
         // Проверка, покинул ли бот чат
         $status = $update?->myChatMember?->newChatMember?->status;
 

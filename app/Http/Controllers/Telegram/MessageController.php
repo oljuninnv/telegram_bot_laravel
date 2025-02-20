@@ -52,7 +52,7 @@ class MessageController extends Controller
         } else {
             $chatEventHandler = new ChatEventHandler();
 
-            $chatResponse = $chatEventHandler->handle($telegram, $update);
+            $chatResponse = $chatEventHandler->handle($telegram, $update, $this->botsManager);
             if ($chatResponse) {
                 return response($chatResponse, 200);
             }
