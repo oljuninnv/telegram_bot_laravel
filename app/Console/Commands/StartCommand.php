@@ -17,22 +17,21 @@ class StartCommand extends Command
         $message = $this->getUpdate()->getMessage();
         $chatId = $message->getChat()->id;
 
-        // Проверка, является ли пользователь администратором
-        if ($chatId != env('TELEGRAM_USER_ADMIN_ID')) {
-            $response = 'Вам не доступен функционал бота';
+        if ($chatId == env('TELEGRAM_USER_ADMIN_ID')) {
+            $response = "Добрый день, рад вас видеть";
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => $response,
+                'reply_markup' => Keyboards::mainAdminKeyboard() // Добавляем клавиатуру
             ]);
-            return;
+        }
+        else{
+            $response = "Добрый день, рад вас видеть";
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => $response
+            ]);
         }
 
-        // Приветственное сообщение для администратора
-        $response = "Добрый день, рад вас видеть";
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => $response,
-            'reply_markup' => Keyboards::mainAdminKeyboard() // Добавляем клавиатуру
-        ]);
     }
 }

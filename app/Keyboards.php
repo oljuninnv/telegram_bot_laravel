@@ -3,33 +3,30 @@
 namespace App;
 
 use Telegram\Bot\Keyboard\Keyboard;
-use Telegram\Bot\Keyboard\Button;
 
 class Keyboards
 {
     public static function mainAdminKeyboard()
     {
-        $reply_markup = Keyboard::make()
+        return Keyboard::make()
             ->setResizeKeyboard(true)
             ->setOneTimeKeyboard(true)
+            ->row([
+                Keyboard::button('Получить список чатов'),
+            ])
             ->row([
                 Keyboard::button('Настройка сбора отчетов'),
                 Keyboard::button('Проверить отчеты'),
             ])
             ->row([
                 Keyboard::button('Получить отчеты'),
-                Keyboard::button('Получить список чатов'),
-            ])
-            ->row([
-                KeyBoard::button('Помощь')
+                Keyboard::button('Помощь'),
             ]);
-
-        return $reply_markup;
     }
 
-    public function settingsAdminKeyboard()
+    public static function settingsAdminKeyboard()
     {
-        $reply_markup = Keyboard::make()
+        return Keyboard::make()
             ->setResizeKeyboard(true)
             ->setOneTimeKeyboard(true)
             ->row([
@@ -40,11 +37,6 @@ class Keyboards
                 Keyboard::button('Установить время сбора отчёта'),
                 Keyboard::button('Управление хэштегами'),
                 Keyboard::button('Назад'),
-            ])
-            ->row([
-                Keyboard::button('Назад'),
             ]);
-
-        return $reply_markup;
     }
 }

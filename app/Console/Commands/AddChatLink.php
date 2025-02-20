@@ -31,7 +31,7 @@ class AddChatLink extends Command
 
         if ($typeChat == 'chat' || $typeChat == 'group' || $typeChat == 'supergroup') {
 
-            $inviteLink = $this->argument('link', 'error');
+            $inviteLink = $this->argument('link', 'null');
 
             // Сохраняем ссылку в базу данных
             Chat::where('chat_id', $this->getUpdate()->message->chat->id)->update([
