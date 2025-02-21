@@ -35,27 +35,6 @@ class SettingsStateHandler
                     ]);
                     break;
 
-                case 'Установить период':
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Пожалуйста, укажите период для сбора отчетов.',
-                    ]);
-                    break;
-
-                case 'Установить время сбора отчёта':
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Пожалуйста, укажите время сбора отчета.',
-                    ]);
-                    break;
-
-                case 'Управление хэштегами':
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Выберите действие для управления хэштегами.',
-                    ]);
-                    break;
-
                 case 'Назад':
                     UserState::resetState($userId);
                     $telegram->sendMessage([
