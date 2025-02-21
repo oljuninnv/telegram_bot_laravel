@@ -6,6 +6,7 @@ use Telegram\Bot\Api;
 use App\Keyboards;
 use App\Services\UserState;
 use Telegram\Bot\BotsManager;
+use App\Handlers\CreateSettingHandler;
 
 class SettingsStateHandler
 {
@@ -28,11 +29,15 @@ class SettingsStateHandler
 
         if (!$isBotCommand) {
             switch ($messageText) {
-                case 'Установить день недели':
+                case 'Настроить сбор отчётов':
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
-                        'text' => 'Пожалуйста, укажите день недели для сбора отчетов.',
+                        'text' => 'Хорошо',
+                        'reply_markup' => Keyboards::backAdminKeyboard(),
                     ]);
+                    // UserState::setState($userId, 'createSettings');
+                    // $createSettingsHandler = new CreateSettingHandler();
+                    // $createSettingsHandler->handle($telegram, $chatId, $userId, $messageText, $botsManager);
                     break;
 
                 case 'Назад':
