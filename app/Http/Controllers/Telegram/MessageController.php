@@ -10,6 +10,10 @@ use App\Handlers\SettingsStateHandler;
 use App\Handlers\CreateSettingHandler;
 use App\Handlers\ChatEventHandler;
 use Telegram\Bot\BotsManager;
+use App\Handlers\UpdateHandlers\UpdatePeriodHandler;
+use App\Handlers\UpdateHandlers\UpdateTimeHandler;
+use App\Handlers\UpdateHandlers\UpdateDayOfWeekHandler;
+use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
 
 class MessageController extends Controller
 {
@@ -60,6 +64,22 @@ class MessageController extends Controller
 
                     case 'createSettings':
                         $createSettingsHandler->handle($telegram, $chatId, $userId, $messageText, $this->botsManager);
+                        break;
+                    case 'updatePeriod':
+                        $handler = new UpdatePeriodHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText);
+                        break;
+                    case 'updateDayOfWeek':
+                        $handler = new UpdateDayOfWeekHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText);
+                        break;
+                    case 'updateHashtags':
+                        $handler = new UpdateHashtagsHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText);
+                        break;
+                    case 'updateTime':
+                        $handler = new UpdateTimeHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText);
                         break;
                 }
             }

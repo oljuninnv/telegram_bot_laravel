@@ -17,17 +17,11 @@ class CreateSettingHandler
         $botsManager->bot()->commandsHandler(true);
         $update = $telegram->getWebhookUpdate();
 
-        // Логируем update для отладки
-        \Log::info('CreateSettingHandler received update:', [$update]);
-
         // Обработка callback_query (нажатие на inline-кнопку)
         if ($update->callback_query) {
             $callbackData = $update->callback_query->data;
             $messageText = $callbackData; // Используем данные из callback_query как текст сообщения
             $chatId = $update->callback_query->message->chat->id; // Обновляем chatId из callback_query
-
-            // Логируем callback_query для отладки
-            \Log::info('Callback query received:', [$callbackData]);
         }
 
         if (!empty($update->message->entities)) {
@@ -111,6 +105,7 @@ class CreateSettingHandler
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
                         'text' => 'Настройка успешно создана!',
+                        'reply_markup' => Keyboards::mainAdminKeyboard(),
                     ]);
                     UserState::resetState($userId);
                     SettingState::clearAll($userId); // Очищаем все данные

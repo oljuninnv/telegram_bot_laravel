@@ -38,20 +38,20 @@ class Keyboards
     }
 
     public static function updateSettingsKeyboard()
-{
-    return Keyboard::make()
-        ->row([
-            Keyboard::button(['text' => 'Обновить период', 'callback_data' => 'Обновить период']),
-            Keyboard::button(['text' => 'Обновить время', 'callback_data' => 'Обновить время']),
-        ])
-        ->row([
-            Keyboard::button(['text' => 'Обновить день недели', 'callback_data' => 'Обновить день недели']),
-            Keyboard::button(['text' => 'Обновить хэштеги', 'callback_data' => 'Обновить хэштеги']),
-        ])
-        ->row([
-            Keyboard::button(['text' => 'Назад', 'callback_data' => 'Назад']),
-        ]);
-}
+    {
+        return Keyboard::make()
+            ->row([
+                Keyboard::button(['text' => 'Обновить период', 'callback_data' => 'Обновить период']),
+                Keyboard::button(['text' => 'Обновить время', 'callback_data' => 'Обновить время']),
+            ])
+            ->row([
+                Keyboard::button(['text' => 'Обновить день недели', 'callback_data' => 'Обновить день недели']),
+                Keyboard::button(['text' => 'Обновить хэштеги', 'callback_data' => 'Обновить хэштеги']),
+            ])
+            ->row([
+                Keyboard::button(['text' => 'Назад', 'callback_data' => 'Назад']),
+            ]);
+    }
 
     public static function backAdminKeyboard()
     {
