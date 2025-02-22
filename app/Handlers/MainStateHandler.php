@@ -8,6 +8,8 @@ use App\Services\UserState;
 use App\Models\Chat;
 use Telegram\Bot\BotsManager;
 use App\Models\Setting;
+use App\Models\Hashtag;
+use App\Models\Setting_Hashtag;
 class MainStateHandler
 {
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, BotsManager $botsManager)
@@ -55,7 +57,11 @@ class MainStateHandler
                             'text' => "Текущие настройки:\n"
                                 . "День недели: {$set->report_day}\n"
                                 . "Время: {$set->report_time}\n"
-                                . "Период сбора: {$set->weeks_in_period}\n"
+                                . "Период сбора: {$set->weeks_in_period}\n\n"
+                                . "Все хэштеги в базе данных:\n"
+                                . $this->getAllHashtags() . "\n\n"
+                                . "Подключённые хэштеги:\n"
+                                . $this->getAttachedHashtags($set) . "\n\n"
                                 . "Что вы хотите обновить?",
                             'reply_markup' => Keyboards::updateSettingsKeyboard(),
                         ]);
@@ -95,5 +101,34 @@ class MainStateHandler
                     break;
             }
         }
+    }
+
+    private function getAllHashtags(): string
+    {
+        $hashtags = Hashtag::all();
+        $hashtagList = [];
+
+        foreach ($hashtags as $hashtag) {
+            $hashtagList[] = $hashtag->hashtag;
+        }
+
+        return implode(', ', $hashtagList);
+    }
+
+    // Метод для получения подключённых хэштегов к текущей настройке
+    private function getAttachedHashtags(Setting $setting): string
+    {
+        // Используем модель Setting_Hashtag для получения привязанных хэштегов
+        $attachedHashtags = Setting_Hashtag::where('setting_id', $setting->id)
+            ->with('hashtag') 
+            ->get()
+            ->pluck('hashtag.hashtag')
+            ->toArray();
+
+        if (!empty($attachedHashtags)) {
+            return implode(', ', $attachedHashtags);
+        }
+
+        return 'Нет подключённых хэштегов';
     }
 }

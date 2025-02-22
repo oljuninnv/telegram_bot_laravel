@@ -64,7 +64,7 @@ class Keyboards
                 Keyboard::button(['text' => 'Привязать хэштег']),
             ])
             ->row([
-                Keyboard::button(['text' => 'Обновить хэштеги в настройке']),
+                Keyboard::button(['text' => 'Отвязать хэштег']),
                 Keyboard::button(['text' => 'Назад']),
             ]);
     }

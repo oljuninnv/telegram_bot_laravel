@@ -50,10 +50,10 @@ class UpdateHashtagsHandler
                 UserState::setState($userId, 'attachHashtag');
                 break;
 
-            case 'Обновить хэштеги':
+            case 'Отвязать хэштег':
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => "Чтобы обновить хэштеги, введите список хэштегов через запятую (например, #example1, #example2).",
+                    'text' => "Чтобы отвязать хэштег из настроек, введите хэштег, который хотите отвязать.",
                 ]);
                 UserState::setState($userId, 'updateHashtagsSetting');
                 break;
