@@ -19,7 +19,6 @@ class Keyboards
                 Keyboard::button('Проверить отчеты'),
             ])
             ->row([
-                Keyboard::button('Получить отчеты'),
                 Keyboard::button('Помощь'),
             ]);
     }
@@ -37,6 +36,22 @@ class Keyboards
             ]);
     }
 
+    public static function updateSettingsKeyboard()
+{
+    return Keyboard::make()
+        ->row([
+            Keyboard::button(['text' => 'Обновить период', 'callback_data' => 'Обновить период']),
+            Keyboard::button(['text' => 'Обновить время', 'callback_data' => 'Обновить время']),
+        ])
+        ->row([
+            Keyboard::button(['text' => 'Обновить день недели', 'callback_data' => 'Обновить день недели']),
+            Keyboard::button(['text' => 'Обновить хэштеги', 'callback_data' => 'Обновить хэштеги']),
+        ])
+        ->row([
+            Keyboard::button(['text' => 'Назад', 'callback_data' => 'Назад']),
+        ]);
+}
+
     public static function backAdminKeyboard()
     {
         return Keyboard::make()
@@ -52,15 +67,15 @@ class Keyboards
         return Keyboard::make()
             ->inline()
             ->row([
-                Keyboard::inlineButton(['text' => 'Понедельник', 'callback_data' => 'Понедельник']),
-                Keyboard::inlineButton(['text' => 'Вторник', 'callback_data' => 'Вторник']),
-                Keyboard::inlineButton(['text' => 'Среда', 'callback_data' => 'Среда']),
+                Keyboard::inlineButton(['text' => 'Понедельник', 'callback_data' => 'понедельник']),
+                Keyboard::inlineButton(['text' => 'Вторник', 'callback_data' => 'вторник']),
+                Keyboard::inlineButton(['text' => 'Среда', 'callback_data' => 'среда']),
             ])
             ->row([
-                Keyboard::inlineButton(['text' => 'Четверг', 'callback_data' => 'Четверг']),
-                Keyboard::inlineButton(['text' => 'Пятница', 'callback_data' => 'Пятница']),
-                Keyboard::inlineButton(['text' => 'Суббота', 'callback_data' => 'Суббота']),
-                Keyboard::inlineButton(['text' => 'Воскресенье', 'callback_data' => 'Воскресенье']),
+                Keyboard::inlineButton(['text' => 'Четверг', 'callback_data' => 'четверг']),
+                Keyboard::inlineButton(['text' => 'Пятница', 'callback_data' => 'пятница']),
+                Keyboard::inlineButton(['text' => 'Суббота', 'callback_data' => 'суббота']),
+                Keyboard::inlineButton(['text' => 'Воскресенье', 'callback_data' => 'воскресенье']),
             ]);
     }
 }

@@ -7,6 +7,7 @@ use App\Keyboards;
 use App\Services\UserState;
 use App\Models\Chat;
 use Telegram\Bot\BotsManager;
+use App\Models\Setting;
 class MainStateHandler
 {
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, BotsManager $botsManager)
@@ -40,11 +41,25 @@ class MainStateHandler
                     break;
                 case 'Настройка сбора отчетов':
                     UserState::setState($userId, 'settings');
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Вы выбрали настройку сбора отчетов.',
-                        'reply_markup' => Keyboards::settingsAdminKeyboard(),
-                    ]);
+                    $set= Setting::all()->last();
+
+                    if (!$set) {
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => 'Настройки отсутствуют. Хотите создать новую?',
+                            'reply_markup' => Keyboards::settingsAdminKeyboard(),
+                        ]);
+                    } else {
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => "Текущие настройки:\n"
+                                . "День недели: {$set->report_day}\n"
+                                . "Время: {$set->report_time}\n"
+                                . "Период сбора: {$set->weeks_in_period}\n"
+                                . "Что вы хотите обновить?",
+                            'reply_markup' => Keyboards::updateSettingsKeyboard(),
+                        ]);
+                    }
                     break;
 
                 case 'Проверить отчеты':
@@ -54,21 +69,13 @@ class MainStateHandler
                     ]);
                     break;
 
-                case 'Получить отчеты':
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Вы выбрали получение отчетов.',
-                    ]);
-                    break;
-
                 case 'Помощь':
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
                         'text' => "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
                             "1. Получить список чатов - Позволяет получить список доступных чатов.\n" .
                             "2. Настройка сбора отчетов - Позволяет настроить параметры сбора отчетов.\n" .
-                            "3. Проверить отчеты - Проверяет текущие отчеты и их статус.\n" .
-                            "4. Получить отчеты - Получает и отображает отчеты по заданным параметрам.\n",
+                            "3. Проверить отчеты - Проверяет текущие отчеты и их статус.\n",
                     ]);
                     break;
 

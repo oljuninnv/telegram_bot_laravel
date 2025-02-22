@@ -7,6 +7,7 @@ use App\Keyboards;
 use App\Services\UserState;
 use Telegram\Bot\BotsManager;
 use App\Handlers\CreateSettingHandler;
+use App\Models\Setting;
 
 class SettingsStateHandler
 {
@@ -32,12 +33,14 @@ class SettingsStateHandler
                 case 'Настроить сбор отчётов':
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
-                        'text' => 'Хорошо',
+                        'text' => 'Хорошо, давайте настроим сбор отчётов.',
                         'reply_markup' => Keyboards::backAdminKeyboard(),
                     ]);
-                    // UserState::setState($userId, 'createSettings');
-                    // $createSettingsHandler = new CreateSettingHandler();
-                    // $createSettingsHandler->handle($telegram, $chatId, $userId, $messageText, $botsManager);
+                    UserState::setState($userId, 'createSettings'); // Устанавливаем состояние
+    
+                    // Автоматически запускаем первый шаг настройки
+                    $createSettingsHandler = new CreateSettingHandler();
+                    $createSettingsHandler->handle($telegram, $chatId, $userId, 'Создать настройку', $botsManager);
                     break;
 
                 case 'Назад':
