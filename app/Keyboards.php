@@ -53,6 +53,22 @@ class Keyboards
             ]);
     }
 
+    public static function hashtagSettingsKeyboard()
+    {
+        return Keyboard::make()
+            ->row([
+                Keyboard::button(['text' => 'Создать хэштег']),
+            ])
+            ->row([
+                Keyboard::button(['text' => 'Удалить хэштег']),
+                Keyboard::button(['text' => 'Привязать хэштег']),
+            ])
+            ->row([
+                Keyboard::button(['text' => 'Обновить хэштеги в настройке']),
+                Keyboard::button(['text' => 'Назад']),
+            ]);
+    }
+
     public static function backAdminKeyboard()
     {
         return Keyboard::make()

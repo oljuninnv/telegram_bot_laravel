@@ -11,7 +11,7 @@ use App\Models\Setting;
 use App\Handlers\UpdateHandlers\UpdatePeriodHandler;
 use App\Handlers\UpdateHandlers\UpdateTimeHandler;
 use App\Handlers\UpdateHandlers\UpdateDayOfWeekHandler;
-use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
+use App\Handlers\UpdateHandlers\UpdateHashtagsSettingsHandler;
 
 class SettingsStateHandler
 {
@@ -106,7 +106,8 @@ class SettingsStateHandler
                     }
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
-                        'text' => 'Введите новые хэштеги через запятую:',
+                        'text' => 'Выберите действие для настройки хэштегов:',
+                        'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
                     ]);
                     UserState::setState($userId, 'updateHashtags'); // Устанавливаем состояние для обновления хэштегов
                     break;

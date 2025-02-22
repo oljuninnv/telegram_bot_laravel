@@ -14,6 +14,10 @@ use App\Handlers\UpdateHandlers\UpdatePeriodHandler;
 use App\Handlers\UpdateHandlers\UpdateTimeHandler;
 use App\Handlers\UpdateHandlers\UpdateDayOfWeekHandler;
 use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
+use App\Handlers\UpdateHandlers\Hashtags\AttachHashtagHandler;
+use App\Handlers\UpdateHandlers\Hashtags\CreateHashtagHandler;
+use App\Handlers\UpdateHandlers\Hashtags\DeleteHashtagHandler;
+use App\Handlers\UpdateHandlers\Hashtags\UpdateHashtagsSettingHandler;
 
 class MessageController extends Controller
 {
@@ -29,14 +33,10 @@ class MessageController extends Controller
         $telegram = new Api(config('telegram.bot_token'));
         $update = $telegram->getWebhookUpdate();
 
-        // Логируем весь update для отладки
-        \Log::info('Update received:', [$update]);
-
-        // Обработка callback_query
         if ($update->callback_query) {
             $chatId = $update->callback_query->message->chat->id;
             $userId = $update->callback_query->from->id;
-            $messageText = $update->callback_query->data; // Данные из callback_query
+            $messageText = $update->callback_query->data;
         } else {
             $chatId = $update?->message?->chat?->id;
             $userId = $update?->message?->from?->id;
@@ -79,6 +79,22 @@ class MessageController extends Controller
                         break;
                     case 'updateTime':
                         $handler = new UpdateTimeHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText);
+                        break;
+                    case 'createHashtag':
+                        $handler = new CreateHashtagHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText);
+                        break;
+                    case 'deleteHashtag':
+                        $handler = new DeleteHashtagHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText);
+                        break;
+                    case 'attachHashtag':
+                        $handler = new AttachHashtagHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText);
+                        break;
+                    case 'updateHashtagsSetting':
+                        $handler = new UpdateHashtagsSettingHandler();
                         $handler->handle($telegram, $chatId, $userId, $messageText);
                         break;
                 }
