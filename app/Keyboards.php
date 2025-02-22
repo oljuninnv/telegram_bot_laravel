@@ -17,6 +17,7 @@ class Keyboards
             ->row([
                 Keyboard::button('Настройка сбора отчетов'),
                 Keyboard::button('Проверить отчеты'),
+                Keyboard::button('Получить отчеты'),
             ])
             ->row([
                 Keyboard::button('Помощь'),
