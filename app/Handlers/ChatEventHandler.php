@@ -11,51 +11,42 @@ class ChatEventHandler
 {
     public function handle(Api $telegram, $update, BotsManager $botsManager)
     {
+        // return response()->json($update?->myChatMember);
         $botsManager->bot()->commandsHandler(true);
-        // Проверка, покинул ли бот чат
-        $status = $update?->myChatMember?->newChatMember?->status;
 
-        // Проверка, был ли бот добавлен в чат
-        if ($update?->myChatMember?->newChatMember?->user?->id) 
-        {
-            // Проверка, является ли пользователь, добавивший бота, администратором
-            if ($update->myChatMember->from->id == env('TELEGRAM_USER_ADMIN_ID')) {
-                $chatId = $update->myChatMember->chat->id;
+        $chatMember = $update?->myChatMember;
+        $status = $chatMember?->newChatMember?->status;
+        $chatId = $chatMember?->chat?->id;
+        $userId = $chatMember?->from?->id;
 
-                // Если бот покинул чат, удаляем информацию о чате из базы данных
-                if ($status == 'left' || $status == 'kicked') {
+        // Обработка событий добавления/удаления бота
+        if ($chatId && $userId) {
+            if ($userId == env('TELEGRAM_USER_ADMIN_ID')) {
+                if (in_array($status, ['left', 'kicked'])) {
                     Chat::where('chat_id', $chatId)->delete();
                     return 'Чат удален';
                 }
 
-                // Проверка, существует ли уже запись о чате в базе данных
-                $chatExists = Chat::where('chat_id', $chatId)->exists();
-                if (!$chatExists) {
-                    Chat::create(['name' => $update->myChatMember->chat->title, 'chat_id' => $chatId]);
+                if (!Chat::where('chat_id', $chatId)->exists()) {
+                    Chat::create(['name' => $chatMember->chat->title, 'chat_id' => $chatId]);
                     return 'Чат добавлен';
                 }
-
-            } else {
-                // Если пользователь не является администратором и бот ещё не покинул чат, он покидает чат
-                if ($status != 'left') {
-                    $telegram->leaveChat(['chat_id' => $update->myChatMember->chat->id]);
-                    return 'Бот покинул чат';
-                }
+            } elseif ($status != 'left') {
+                $telegram->leaveChat(['chat_id' => $chatId]);
+                return 'Бот покинул чат';
             }
         }
 
+        // Обработка сообщений с хэштегами
         $messageText = $update?->message?->text;
-
-        if ($messageText) {
-            $hashtags = Hashtag::where('hashtag', $messageText)->first();
-            if ($hashtags) {
-                $telegram->sendMessage([
-                    'chat_id' => $update->message->chat->id,
-                    'text' => 'Сообщение содержит хэштег - '. $hashtags['hashtag'],
-                ]);
-                return 'Сообщение содержит хэштег - '. $hashtags['hashtag'];
-            }
+        if ($messageText && $hashtag = Hashtag::where('hashtag', $messageText)->first()) {
+            $telegram->sendMessage([
+                'chat_id' => $update->message->chat->id,
+                'text' => 'Сообщение содержит хэштег - ' . $hashtag->hashtag,
+            ]);
+            return 'Сообщение содержит хэштег - ' . $hashtag->hashtag;
         }
-        return null; 
+
+        return null;
     }
 }

@@ -33,79 +33,51 @@ class MessageController extends Controller
         $telegram = new Api(config('telegram.bot_token'));
         $update = $telegram->getWebhookUpdate();
 
-        if ($update->callback_query) {
-            $chatId = $update->callback_query->message->chat->id;
-            $userId = $update->callback_query->from->id;
-            $messageText = $update->callback_query->data;
-        } else {
-            $chatId = $update?->message?->chat?->id;
-            $userId = $update?->message?->from?->id;
-            $messageText = $update?->message?->text;
-        }
-
-        $chatType = $update?->message?->chat?->type ?? $update->callback_query->message->chat->type;
-
-        if ($chatType == 'private') {
-            $mainHandler = new MainStateHandler();
-            $settingsHandler = new SettingsStateHandler();
-            $createSettingsHandler = new CreateSettingHandler();
-
-            $currentState = UserState::getState($userId);
-
-            if ($messageText && $chatId == env('TELEGRAM_USER_ADMIN_ID')) {
-                switch ($currentState) {
-                    case 'main':
-                        $mainHandler->handle($telegram, $chatId, $userId, $messageText, $this->botsManager);
-                        break;
-
-                    case 'settings':
-                        $settingsHandler->handle($telegram, $chatId, $userId, $messageText, $this->botsManager);
-                        break;
-
-                    case 'createSettings':
-                        $createSettingsHandler->handle($telegram, $chatId, $userId, $messageText, $this->botsManager);
-                        break;
-                    case 'updatePeriod':
-                        $handler = new UpdatePeriodHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-                    case 'updateDayOfWeek':
-                        $handler = new UpdateDayOfWeekHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-                    case 'updateHashtags':
-                        $handler = new UpdateHashtagsHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-                    case 'updateTime':
-                        $handler = new UpdateTimeHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-                    case 'createHashtag':
-                        $handler = new CreateHashtagHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-                    case 'deleteHashtag':
-                        $handler = new DeleteHashtagHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-                    case 'attachHashtag':
-                        $handler = new AttachHashtagHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-                    case 'updateHashtagsSetting':
-                        $handler = new UpdateHashtagsSettingHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-                }
-            }
-        } else {
+        if ($update?->myChatMember?->chat?->type != 'private') {
             $chatEventHandler = new ChatEventHandler();
             $chatResponse = $chatEventHandler->handle($telegram, $update, $this->botsManager);
-            if ($chatResponse) {
-                return response($chatResponse, 200);
-            }
+            return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
+
+        if (!$update->message && !$update->callback_query) {
+            return response(null, 200);
+        }
+
+        $chatId = $update->callback_query ? $update->callback_query->message->chat->id : $update?->message?->chat?->id;
+        $userId = $update->callback_query ? $update->callback_query->from->id : $update?->message?->from?->id;
+        $messageText = $update->callback_query ? $update->callback_query->data : $update?->message?->text;
+        $chatType = $update?->message?->chat?->type ?? $update->callback_query->message->chat->type;
+
+        if ($chatType !== 'private') {
+            $chatEventHandler = new ChatEventHandler();
+            $chatResponse = $chatEventHandler->handle($telegram, $update, $this->botsManager);
+            return $chatResponse ? response($chatResponse, 200) : response(null, 200);
+        }
+
+        if ($chatId != env('TELEGRAM_USER_ADMIN_ID')) {
+            return response(null, 200);
+        }
+
+        $handlers = [
+            'main' => MainStateHandler::class,
+            'settings' => SettingsStateHandler::class,
+            'createSettings' => CreateSettingHandler::class,
+            'updatePeriod' => UpdatePeriodHandler::class,
+            'updateDayOfWeek' => UpdateDayOfWeekHandler::class,
+            'updateHashtags' => UpdateHashtagsHandler::class,
+            'updateTime' => UpdateTimeHandler::class,
+            'createHashtag' => CreateHashtagHandler::class,
+            'deleteHashtag' => DeleteHashtagHandler::class,
+            'attachHashtag' => AttachHashtagHandler::class,
+            'updateHashtagsSetting' => UpdateHashtagsSettingHandler::class,
+        ];
+
+        $currentState = UserState::getState($userId);
+        if (isset($handlers[$currentState])) {
+            $handler = new $handlers[$currentState]();
+            $handler->handle($telegram, $chatId, $userId, $messageText, $this->botsManager);
+        }
+
         return response(null, 200);
     }
 }

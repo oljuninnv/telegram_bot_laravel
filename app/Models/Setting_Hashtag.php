@@ -12,6 +12,7 @@ class Setting_Hashtag extends Model
     protected $table = 'setting_hashtags';
 
     protected $fillable = [
+        'id',
         'hashtag_id',
         'setting_id',
     ];
