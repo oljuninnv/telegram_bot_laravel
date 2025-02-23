@@ -12,6 +12,7 @@ class Setting extends Model
     protected $table = 'settings';
 
     protected $fillable = [
+        'id',
         'report_day',
         'report_time',
         'weeks_in_period',

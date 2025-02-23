@@ -12,6 +12,7 @@ class Hashtag extends Model
     protected $table = 'hashtags';
 
     protected $fillable = [
+        'id',
         'hashtag',
         'report_title',
     ];

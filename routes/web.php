@@ -19,19 +19,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route::post('/telegram-webhook', [MessageController::class, 'index']);
 Route::post('/telegram-webhook', [MessageController::class, '__invoke']); //запуск команды
 
-Route::get('/send', function () {
-    $telegram = new Api(config('telegram.bot_token'));
-    $update = $telegram->getWebhookUpdate();
+use App\Http\Controllers\GoogleSheetsController;
 
-    $message = $update->getMessage();
+Route::get('/fill-sheet', [GoogleSheetsController::class, 'fillSheet']);
 
-    Telegram::sendMessage([
-        'chat_id' => '618692024',
-        'text' => 'Hello from Laravel!',
-    ]);
-
-    return 'Message sent!';
-});

@@ -31,4 +31,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'google' => [
+        'application_name' => env('GOOGLE_APPLICATION_NAME'),
+        'sheet_id' => env('GOOGLE_SHEET_ID'),
+        'service_account_json_location' => env('GOOGLE_SERVICE_ACCOUNT_JSON_LOCATION'),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'service_enabled' => env('GOOGLE_SERVICE_ENABLED'),
+    ],
+
 ];
