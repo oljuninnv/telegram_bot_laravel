@@ -5,6 +5,7 @@ namespace App\Handlers;
 use Telegram\Bot\Api;
 use App\Models\Chat;
 use App\Models\Hashtag;
+use App\Models\Setting_Hashtag;
 use Telegram\Bot\BotsManager;
 
 class ChatEventHandler
@@ -39,12 +40,22 @@ class ChatEventHandler
 
         // Обработка сообщений с хэштегами
         $messageText = $update?->message?->text;
-        if ($messageText && $hashtag = Hashtag::where('hashtag', $messageText)->first()) {
-            $telegram->sendMessage([
-                'chat_id' => $update->message->chat->id,
-                'text' => 'Сообщение содержит хэштег - ' . $hashtag->hashtag,
-            ]);
-            return 'Сообщение содержит хэштег - ' . $hashtag->hashtag;
+        if ($messageText) {
+            // Получаем id хэштегов из Setting_Hashtag
+            $allowedHashtagIds = Setting_Hashtag::pluck('hashtag_id')->toArray();
+        
+            // Ищем хэштег, который есть в списке разрешенных
+            $hashtag = Hashtag::where('hashtag', $messageText)
+                              ->whereIn('id', $allowedHashtagIds)
+                              ->first();
+        
+            if ($hashtag) {
+                $telegram->sendMessage([
+                    'chat_id' => $update->message->chat->id,
+                    'text' => 'Сообщение содержит хэштег - ' . $hashtag->hashtag,
+                ]);
+                return 'Сообщение содержит хэштег - ' . $hashtag->hashtag;
+            }
         }
 
         return null;

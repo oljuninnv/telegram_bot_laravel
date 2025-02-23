@@ -33,7 +33,7 @@ class MessageController extends Controller
         $telegram = new Api(config('telegram.bot_token'));
         $update = $telegram->getWebhookUpdate();
 
-        if ($update?->myChatMember?->chat?->type != 'private') {
+        if ($update?->myChatMember?->chat?->type && $update?->myChatMember?->chat?->type != 'private') {
             $chatEventHandler = new ChatEventHandler();
             $chatResponse = $chatEventHandler->handle($telegram, $update, $this->botsManager);
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
