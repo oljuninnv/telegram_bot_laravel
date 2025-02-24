@@ -1,66 +1,95 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## Краткое описание
+Разработанный бот предназначен для сбора отчётов из чатов и отправки данных о присутствии сообщений с хэштегами и ссылками на отчёт в отдельную google таблицу, написанный на telegram bot sdk + Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Требования
+Перед началом работы убедитесь, что у вас установлены следующие компоненты:
+- PHP (версия 8.0 или выше);
+- Composer (менеджер зависимостей для PHP);
+- Установленный Git;
+- Установленная база данных MySQL;
+- ngrok - для публичного доступа к локальному серверу;
 
-## About Laravel
+## Создание Telegram-бота:
+1. Перейдите в Telegram и запустите бота @BotFather;
+2. Запустите команду /newbot для создания нового бота;
+3. Введите имя боту;
+4. Скопируйте token бота и ссылку на самого бота;
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Создание Telegram-бота:
+1. Перейдите на Google Cloud Console;
+2. Создайте новый проект;
+3. Активируйте API Google Sheets;
+4. Создайте Service Account:
+- Перейдите в раздел Credentials.
+- Нажмите Create Credentials → Service Account.
+- Укажите имя, создайте, и на вкладке ключей добавьте новый ключ в формате JSON.
+- Скачайте файл ключа и переименуйте его в credentials.json.
+5. Создайте OAuth 2.0 Client IDs. 
+В проекте:
+- Загрузите файл credentials.json в директорию: app/storage/credentials.json
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Настройка ngrok:
+1. Через vpn войдите на официальный сайт [ngrok](https://ngrok.com/) и создайте бесплатный аккаунт;
+2. Запустите ngrok для перенаправления локального сервера командой: ngrok http 8000 (или другой используемый порт).
+3. Через postman, выберите метод POST и вставьте строку: 
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```
+https://api.telegram.org/bot{token_бота}/setWebhook?url={ссылка_предоставляемая_ngrok_Forwarding}/telegram-webhook
+```
 
-## Learning Laravel
+## Настройка Google таблицы:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. Создайте таблицу Google Sheets;
+2. Добавьте в качестве редактора email сервисного аккаунта.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Настройка проекта:
+1. Переименуйте файл .env.example в .env;
+2. Сгенерируйте ключ приложения командой: 
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+php artisan key:generate;
+```
 
-## Laravel Sponsors
+3. Введите свои данные в env:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+```
+- TELEGRAM_BOT_TOKEN="токен вашего бота (получаемый от botfather)"
+- TELEGRAM_WEBHOOK_URL="(ссылка предоставляемая ngrok (Forwarding)/telegram-webhook)"
+- TELEGRAM_USER_ADMIN_ID="ваш id в телеграмм"
+- GOOGLE_APPLICATION_NAME="название вашей таблицы"
+- GOOGLE_SHEET_ID="ID вашей страницы (получается из ссылки Пример: https://docs.google.com/spreadsheets/d/12345/editgid=232067112#gid=232067112 , где 12345 - GOOGLE_SHEET_ID)"
+- GOOGLE_SERVICE_ACCOUNT_JSON_LOCATION=storage/credentials.json
+- GOOGLE_CLIENT_ID="CLIENT_ID, получаемый при создании OAuth 2.0 Client ID"
+- GOOGLE_CLIENT_SECRET="CLIENT_SECRET, получаемый при создании OAuth 2.0 Client ID"
+- GOOGLE_SERVICE_ENABLED=true
+```
+4. Запустите seeder командой:
 
-### Premium Partners
+```
+php artisan db:seed
+```
+5. Установите пакет telegram bot sdk:
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+```
+composer require irazasyed/telegram-bot-sdk
+```
 
-## Contributing
+## Запуск бота
+Теперь тестовый проект на Laravel с Vue.js запущен и готов к использованию. Спасибо за внимание.
+1. Запустите локальный сервер командой:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```
+php artisan serve
+```
+2. Перейдите по ссылке ngrok под пунктом Web Interface, дополните её /inspect/http
 
-## Code of Conduct
+3. Запустите бота
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Добавление задачи в планировщик
 
-## Security Vulnerabilities
+1. Используйте Windows Task Scheduler или Cron, в зависимости от системы;
+2. В качестве задачи добавьте запуск PHP, указав аргумент reports:send;
+3. Триггер - ежедневно, выполнять задачу раз в минуту.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Заключение
+Теперь тестовый проект c ботом запущен и готов к использованию. Спасибо за внимание.

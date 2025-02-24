@@ -36,12 +36,14 @@ class SendReports extends Command
         $weeksInPeriod = $settings->weeks_in_period;
         $currentPeriodEndDate = $settings->current_period_end_date;
 
-        $startDate = Carbon::now()->startOfWeek()->setTimeFromTimeString($reportTime);
+        $startDate = Carbon::parse($currentPeriodEndDate)
+            ->subWeeks($weeksInPeriod) // Вычитаем weeksInPeriod
+            ->setTimeFromTimeString($reportTime); // Устанавливаем время reportTime
         $endDate = $currentPeriodEndDate;
 
         // Получаем все отчёты за период
         $reports = Report::whereBetween('start_date', [$startDate, $endDate])->get();
-        \Log::info('Найдено отчетов за период: ' . $reports->count());
+        \Log::info('Найдено отчетов за период ' . $startDate . '-' . $endDate . '' . ':' . $reports->count());
 
         // Получаем хэштеги, которые нужно искать
         $hashtags = Hashtag::whereHas('Setting_Hashtag', function ($query) use ($settings) {
