@@ -52,7 +52,8 @@ class UpdateDayOfWeekHandler
 
                 // Формируем сообщение об изменении настроек
                 $message = "Настройки были обновлены:\n"
-                    . "Сбор отчётов осуществляется в: {$settings->report_day}\n";
+                    . "Сбор отчётов осуществляется в: {$settings->report_day}\n"
+                    . "Они вступят в силу после окончания текущего периода\n";
 
                 foreach ($chats as $chat) {
                     try {

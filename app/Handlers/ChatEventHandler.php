@@ -62,17 +62,16 @@ class ChatEventHandler
 
         // Обработка сообщений с хэштегами
         $messageText = $update?->message?->text;
+
         if ($messageText) {
-            // Проверяем, есть ли entities и является ли он массивом
-            if ($update?->message?->entities && is_array($update->message->entities)) {
+            
+            if ($update?->message?->entities) {
+                
                 foreach ($update->message->entities as $entity) {
                     if ($entity->type === 'hashtag') {
                         $parts = explode(' ', $messageText);
 
-                        if (count($parts) >= 2) {
-                            $hashtagText = $parts[0];
-                            $googleSheetUrl = $parts[1];
-                        } else {
+                        if (count($parts) < 2) {
                             $telegram->sendMessage([
                                 'chat_id' => $update->message->chat->id,
                                 'text' => 'Неверный формат сообщения. Пример: #хэштег {ссылка на google таблицу}',
@@ -80,27 +79,37 @@ class ChatEventHandler
                             return 'Неверный формат сообщения. Пример: #хэштег {ссылка на google таблицу}';
                         }
 
+                        $hashtagText = $parts[0];
+                        $googleSheetUrl = $parts[1];
+
+                        // Получаем разрешенные хэштеги
                         $allowedHashtagIds = Setting_Hashtag::pluck('hashtag_id')->toArray();
 
-                        // Ищем хэштег, который есть в списке разрешенных
+                        // Ищем хэштег в базе данных
                         $hashtag = Hashtag::where('hashtag', $hashtagText)
                             ->whereIn('id', $allowedHashtagIds)
                             ->first();
 
                         if ($hashtag) {
-                            $settings = Setting::all()->last();
+                            // Получаем настройки
+                            $settings = Setting::latest()->first();
 
-                            // Если записей нет, используем значения по умолчанию
+                            // Устанавливаем время и даты отчета
                             if (!$settings) {
-                                $reportTime = '10:00'; // Значение по умолчанию
+                                $reportTime = '10:00';
+                                $startDate = Carbon::now()->startOfWeek()->setTimeFromTimeString($reportTime);
+                                $endDate = Carbon::now()->endOfWeek()->setTimeFromTimeString($reportTime)->subHour();
                             } else {
                                 $reportTime = $settings->report_time;
+                                $startDate = Carbon::now()->startOfWeek()->setTimeFromTimeString($reportTime);
+                                $endDate = $settings->current_period_end_date;
                             }
 
+                            // Создаем отчет
                             $report = Report::create([
-                                'start_date' => Carbon::now()->startOfWeek()->setTimeFromTimeString($reportTime),
-                                'end_date' => Carbon::now()->endOfWeek()->setTimeFromTimeString($reportTime)->subSecond(),
-                                'google_sheet_url' => $googleSheetUrl
+                                'start_date' => $startDate,
+                                'end_date' => $endDate,
+                                'google_sheet_url' => $googleSheetUrl,
                             ]);
 
                             $chat = Chat::where('chat_id', $update->message->chat->id)->first();
@@ -110,15 +119,18 @@ class ChatEventHandler
                                 'hashtag_id' => $hashtag->id,
                             ]);
 
+                            // Отправляем сообщение пользователю
                             $telegram->sendMessage([
                                 'chat_id' => $update->message->chat->id,
                                 'text' => 'Сообщение с отчётом было отправлено - ' . $hashtag->hashtag,
                             ]);
 
+                            // Уведомляем администратора
                             $telegram->sendMessage([
                                 'chat_id' => env('TELEGRAM_USER_ADMIN_ID'),
                                 'text' => 'В чате ' . $update->message->chat->title . " был отправлен отчёт с хэштегом " . $hashtag->hashtag,
                             ]);
+
                             return 'Сообщение с отчётом было отправлено - ' . $hashtag->hashtag;
                         }
                     }

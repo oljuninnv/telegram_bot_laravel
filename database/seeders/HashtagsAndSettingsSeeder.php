@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Hashtag;
 use App\Models\Setting;
 use App\Models\Setting_Hashtag;
+use Carbon\Carbon;
 
 class HashtagsAndSettingsSeeder extends Seeder
 {
@@ -14,10 +15,16 @@ class HashtagsAndSettingsSeeder extends Seeder
      */
     public function run()
     {
+        // Отключаем проверку внешних ключей
+        \DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
         // Очистка таблиц перед заполнением (опционально)
+        \DB::table('setting_hashtags')->truncate();
         \DB::table('hashtags')->truncate();
         \DB::table('settings')->truncate();
-        \DB::table('setting_hashtags')->truncate();
+
+        // Включаем проверку внешних ключей
+        \DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Заполнение таблицы hashtags
         $hashtags = [
@@ -29,14 +36,14 @@ class HashtagsAndSettingsSeeder extends Seeder
             Hashtag::create($hashtag);
         }
 
-        // Заполнение таблицы settings
-        $settings = [
-            ['id' => 1, 'report_day' => 'понедельник', 'report_time' => '10:00', 'weeks_in_period' => 1],
-        ];
-
-        foreach ($settings as $setting) {
-            Setting::create($setting);
-        }
+        Setting::create([
+            'report_day' => 'Понедельник',
+            'report_time' => '10:00',
+            'weeks_in_period' => 1,
+            'current_period_end_date' => Carbon::now()
+                ->next(1) // Следующий понедельник
+                ->setTime(9, 59, 59), // Устанавливаем время 9:59:59
+        ]);
 
         // Заполнение таблицы setting_hashtags
         $settingHashtags = [

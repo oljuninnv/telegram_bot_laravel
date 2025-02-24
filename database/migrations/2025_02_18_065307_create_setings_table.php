@@ -16,6 +16,7 @@ return new class extends Migration
             $table->enum('report_day', ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'])->default('понедельник');
             $table->time('report_time');
             $table->integer('weeks_in_period');
+            $table->timestamp('current_period_end_date')->nullable();
             $table->timestamps();
         });
     }

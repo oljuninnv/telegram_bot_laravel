@@ -42,7 +42,8 @@ class UpdateTimeHandler
 
                 // Формируем сообщение об изменении настроек
                 $message = "Настройки были обновлены:\n"
-                    . "Время сбора был обнавлён: {$settings->report_time}\n";
+                    . "Время сбора был обнавлён: {$settings->report_time}\n"
+                    . "Они вступят в силу после окончания текущего периода\n";
 
                     foreach ($chats as $chat) {
                         try {

@@ -24,19 +24,18 @@ class SendReports extends Command
         // Получаем настройки из базы данных
         $settings = Setting::all()->last();
 
-        // Если записей нет, используем значения по умолчанию
         if (!$settings) {
-            $reportDay = DayOfWeekEnums::ПОНЕДЕЛЬНИК->value;
-            $reportTime = '10:00';
-            $weeksInPeriod = 1;
-        } else {
-            $reportDay = $settings->report_day;
-            $reportTime = $settings->report_time;
-            $weeksInPeriod = $settings->weeks_in_period;
+            $this->error('Настройки отсутствуют.');
+            return;
         }
 
+        $reportDay = $settings->report_day;
+        $reportTime = $settings->report_time;
+        $weeksInPeriod = $settings->weeks_in_period;
+        $currentPeriodEndDate = $settings->current_period_end_date;
+
         $startDate = Carbon::now()->startOfWeek()->setTimeFromTimeString($reportTime);
-        $endDate = Carbon::now()->endOfWeek()->setTimeFromTimeString($reportTime)->subSecond()->addWeeks($weeksInPeriod);
+        $endDate = $currentPeriodEndDate;
 
         // Получаем все отчёты за период
         $reports = Report::whereBetween('start_date', [$startDate, $endDate])->get();
@@ -50,21 +49,21 @@ class SendReports extends Command
         // Формируем отчёт для каждого хэштега
         foreach ($hashtags as $hashtag) {
             $reportDetails = Report_Detail::where('hashtag_id', $hashtag->id)
-                                         ->whereBetween('created_at', [$startDate, $endDate])
-                                         ->get();
-        
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->get();
+
             $chatsWithHashtags = $reportDetails->pluck('chat_id')->unique();
             $allChats = Chat::pluck('id')->toArray();
             $chatsWithoutHashtags = array_diff($allChats, $chatsWithHashtags->toArray());
-        
+
             $message = "Отчёт за период: " . $startDate . " - " . $endDate . "\n";
             $message .= "Хэштег: " . $hashtag->hashtag . "\n";
             $message .= "Чаты без хэштега:\n";
-        
+
             foreach ($chatsWithoutHashtags as $chatId) {
                 // Используем метод find для поиска чата по ID
                 $chat = Chat::find($chatId);
-        
+
                 // Проверяем, что чат существует
                 if ($chat) {
                     $message .= "Чат: " . $chat->name . " (" . $chat->chat_link . ")\n";
@@ -80,6 +79,18 @@ class SendReports extends Command
             ]);
             \Log::info('Отправлено сообщение для хэштега: ' . $hashtag->hashtag);
         }
+
+        // Обновляем current_period_end_date
+        $dayOfWeekNumber = array_search($reportDay, DayOfWeekEnums::getAllDays());
+        $newPeriodEndDate = Carbon::parse($currentPeriodEndDate)
+            ->addWeeks($weeksInPeriod)
+            ->next($dayOfWeekNumber)
+            ->setTimeFromTimeString($reportTime)
+            ->subSecond();
+
+        $settings->update([
+            'current_period_end_date' => $newPeriodEndDate,
+        ]);
 
         $this->info('Reports sent successfully.');
         \Log::info('Все отчёты успешно отправлены.');

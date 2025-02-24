@@ -15,43 +15,19 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Получаем настройки из базы данных
         $settings = Setting::all()->last();
 
-        // Если записей нет, используем значения по умолчанию
-        if (!$settings){
-            $reportDay = DayOfWeekEnums::ПОНЕДЕЛЬНИК->value; // Значение по умолчанию
-            $reportTime = '10:00';
-            $weeksInPeriod = 1; // Значение по умолчанию
-        } else {
-            $reportDay = $settings->report_day;
-            $reportTime = $settings->report_time;
-            $weeksInPeriod = $settings->weeks_in_period;
+        if (!$settings) {
+            \Log::warning('Настройки отсутствуют. Команда reports:send не будет запущена.');
+            return;
         }
 
-        // Преобразуем день недели в числовой формат для планировщика
-        $dayOfWeek = DayOfWeekEnums::tryFrom($reportDay);
-
-        if (!$dayOfWeek) {
-            $dayOfWeek = DayOfWeekEnums::ПОНЕДЕЛЬНИК;
-        }
-
-        $dayOfWeekNumber = array_search($dayOfWeek, DayOfWeekEnums::getAllDays());
-
-        // Настраиваем задачу с учетом weeks_in_period
         $schedule->command('reports:send')
-            ->weeklyOn($dayOfWeekNumber, $reportTime)
-            ->when(function () use ($weeksInPeriod) {
-                $currentWeekNumber = Carbon::now()->weekOfYear;
-                return ($currentWeekNumber % $weeksInPeriod) === 0;
-            });
+            ->when(function () use ($settings) {
+                return Carbon::now()->greaterThanOrEqualTo($settings->current_period_end_date);
+            })->everyMinute();
 
-        // $schedule->command('reports:send')
-        // ->everyFifteenSeconds();
-        // $schedule->command('reports:send')
-        // ->everyMinute();
-        // $schedule->command('reports:send');
-        \Log::info('Команда reports:send запущена в ' . now());
+        \Log::info('Команда reports:send запланирована.');
     }
     /**
      * Register the commands for the application.

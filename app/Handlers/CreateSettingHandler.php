@@ -9,6 +9,7 @@ use Telegram\Bot\BotsManager;
 use App\Services\UserState;
 use App\Services\SettingState;
 use App\Keyboards;
+use Carbon\Carbon;
 
 class CreateSettingHandler
 {
@@ -97,11 +98,25 @@ class CreateSettingHandler
                 if (is_numeric($messageText) && (int) $messageText > 0) {
                     $dayOfWeek = SettingState::getDayOfWeek($userId);
                     $reportTime = SettingState::getReportTime($userId);
+                    $weeksInPeriod = (int) $messageText;
+
+                    // Преобразуем день недели в числовой формат
+                    $dayOfWeekNumber = array_search($dayOfWeek, DayOfWeekEnums::getAllDays());
+
+                    // Вычисляем current_period_end_date
+                    $currentPeriodEndDate = Carbon::now()
+                        ->next($dayOfWeekNumber) // Следующий указанный день недели
+                        ->setTimeFromTimeString($reportTime)
+                        ->subSecond(); // Уменьшаем время на 1 секунду
+
+                    // Создаем настройку
                     Setting::create([
                         'report_day' => $dayOfWeek,
                         'report_time' => $reportTime,
-                        'weeks_in_period' => (int) $messageText,
+                        'weeks_in_period' => $weeksInPeriod,
+                        'current_period_end_date' => $currentPeriodEndDate,
                     ]);
+
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
                         'text' => 'Настройка успешно создана!',

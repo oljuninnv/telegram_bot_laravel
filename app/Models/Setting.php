@@ -16,6 +16,7 @@ class Setting extends Model
         'report_day',
         'report_time',
         'weeks_in_period',
+        'current_period_end_date'
     ];
 
     public function Setting_Hashtag()
