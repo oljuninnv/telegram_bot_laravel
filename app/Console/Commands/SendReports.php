@@ -11,6 +11,8 @@ use App\Models\Report_Detail;
 use Carbon\Carbon;
 use Telegram\Bot\Api;
 use App\Enums\DayOfWeekEnums;
+use Google\Client;
+use Google\Service\Sheets;
 
 class SendReports extends Command
 {
@@ -46,6 +48,12 @@ class SendReports extends Command
             $query->where('setting_id', $settings->id);
         })->get();
 
+        // Данные для Google таблицы
+        $googleSheetData = [];
+
+        // Добавляем заголовки в начало массива
+        $googleSheetData[] = ['Хэштег', 'Заголовок отчета', 'Ссылки на чаты'];
+
         // Формируем отчёт для каждого хэштега
         foreach ($hashtags as $hashtag) {
             $reportDetails = Report_Detail::where('hashtag_id', $hashtag->id)
@@ -60,17 +68,32 @@ class SendReports extends Command
             $message .= "Хэштег: " . $hashtag->hashtag . "\n";
             $message .= "Чаты без хэштега:\n";
 
+            $chatLinks = []; // Массив для хранения ссылок на чаты
+
             foreach ($chatsWithoutHashtags as $chatId) {
                 // Используем метод find для поиска чата по ID
                 $chat = Chat::find($chatId);
 
                 // Проверяем, что чат существует
                 if ($chat) {
-                    $message .= "Чат: " . $chat->name . " (" . $chat->chat_link . ")\n";
+                    $chatLink = $chat->chat_link ? "{$chat->name} - {$chat->chat_link}" : $chat->name;
+                    $message .= "Чат: " . $chatLink . "\n";
+                    $chatLinks[] = $chatLink; // Добавляем ссылку на чат в массив
                 } else {
                     $message .= "Чат с ID $chatId не найден.\n";
+                    $chatLinks[] = "Чат с ID $chatId не найден"; // Добавляем сообщение об ошибке
                 }
             }
+
+            // Объединяем ссылки на чаты в одну строку с разделителем
+            $chatLinksString = implode("\n", $chatLinks);
+
+            // Добавляем данные в массив для Google таблицы
+            $googleSheetData[] = [
+                $hashtag->hashtag,
+                "Тут не было " . $hashtag->hashtag,
+                $chatLinksString // Все ссылки на чаты в одной ячейке
+            ];
 
             // Отправляем отчёт в личку
             $telegram->sendMessage([
@@ -80,12 +103,62 @@ class SendReports extends Command
             \Log::info('Отправлено сообщение для хэштега: ' . $hashtag->hashtag);
         }
 
+        // Создаем Google таблицу
+        $client = new Client();
+        $client->setApplicationName(env('GOOGLE_APPLICATION_NAME'));
+        $client->setScopes(Sheets::SPREADSHEETS);
+        $client->setAuthConfig(env('GOOGLE_SERVICE_ACCOUNT_JSON_LOCATION'));
+        $client->setAccessType('offline');
+
+        $service = new Sheets($client);
+
+        $spreadsheetId = config('services.google.sheet_id');
+        $startDate = Carbon::parse($startDate)->setTimeFromTimeString($reportTime);
+        $endDate = Carbon::parse($currentPeriodEndDate);
+        $sheetName = $startDate->format('d.m.Y H:i') . ' - ' . $endDate->format('d.m.Y H:i');
+
+        if (empty($spreadsheetId)) {
+            $this->error('GOOGLE_SHEET_ID не задан в .env');
+            return;
+        }
+
+        // Создаем новый лист
+        $batchUpdateRequest = new \Google\Service\Sheets\BatchUpdateSpreadsheetRequest([
+            'requests' => [
+                'addSheet' => [
+                    'properties' => [
+                        'title' => $sheetName
+                    ]
+                ]
+            ]
+        ]);
+
+        $service->spreadsheets->batchUpdate($spreadsheetId, $batchUpdateRequest);
+
+        // Заполняем лист данными
+        $range = $sheetName . '!A1';
+        $body = new \Google\Service\Sheets\ValueRange([
+            'values' => $googleSheetData
+        ]);
+
+        $result = $service->spreadsheets_values->append($spreadsheetId, $range, $body, ['valueInputOption' => 'RAW']);
+
+        // Отправляем ссылку на таблицу
+        $spreadsheetUrl = "https://docs.google.com/spreadsheets/d/{$spreadsheetId}/edit#gid=0";
+        $telegram->sendMessage([
+            'chat_id' => env('TELEGRAM_USER_ADMIN_ID'),
+            'text' => "Ссылка на Google таблицу: " . $spreadsheetUrl,
+        ]);
+
         // Обновляем current_period_end_date
         $dayOfWeekNumber = array_search($reportDay, array_map(fn($day) => $day->value, DayOfWeekEnums::getAllDays()));
+        if ($dayOfWeekNumber + 1 < 7) {
+            $dayOfWeekNumber = 0;
+        }
         \Log::info($dayOfWeekNumber);
         $newPeriodEndDate = Carbon::parse($currentPeriodEndDate)
             ->addWeeks($weeksInPeriod)
-            ->next($dayOfWeekNumber+1)
+            ->next($dayOfWeekNumber + 1)
             ->setTimeFromTimeString($reportTime)
             ->subSecond();
 
