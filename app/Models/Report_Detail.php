@@ -10,12 +10,15 @@ class Report_Detail extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'report_id',
         'chat_id',
         'hashtag_id',
     ];
 
-    protected $table = 'report_deatails';
+    protected $table = 'report_details';
+
+    protected $guarded = [];
 
     public function report()
     {
