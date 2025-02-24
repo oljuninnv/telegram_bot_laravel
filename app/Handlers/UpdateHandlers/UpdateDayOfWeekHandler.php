@@ -8,6 +8,7 @@ use App\Services\UserState;
 use App\Enums\DayOfWeekEnums;
 use App\Models\Hashtag;
 use App\Models\Setting_Hashtag;
+use App\Models\Chat;
 
 
 class UpdateDayOfWeekHandler
@@ -30,7 +31,7 @@ class UpdateDayOfWeekHandler
                     'chat_id' => $chatId,
                     'text' => 'День недели успешно обновлён!',
                 ]);
-                UserState::setState($userId, 'settings');
+
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text' => "Текущие настройки:\n"
@@ -43,6 +44,27 @@ class UpdateDayOfWeekHandler
                         . $this->getAttachedHashtags($settings) . "\n\n"
                         . "Что вы хотите обновить?",
                 ]);
+
+                // Получаем все чаты
+                $chats = Chat::all();
+
+                UserState::setState($userId, 'settings');
+
+                // Формируем сообщение об изменении настроек
+                $message = "Настройки были обновлены:\n"
+                    . "Сбор отчётов осуществляется в: {$settings->report_day}\n";
+
+                foreach ($chats as $chat) {
+                    try {
+                        $telegram->getChat(['chat_id' => $chat->chat_id]); // Проверяем, существует ли чат
+                        $telegram->sendMessage([
+                            'chat_id' => $chat->chat_id,
+                            'text' => $message,
+                        ]);
+                    } catch (\Telegram\Bot\Exceptions\TelegramResponseException $e) {
+                        \Log::error('Ошибка: ' . $e->getMessage());
+                    }
+                }
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
@@ -74,7 +96,7 @@ class UpdateDayOfWeekHandler
     {
         // Используем модель Setting_Hashtag для получения привязанных хэштегов
         $attachedHashtags = Setting_Hashtag::where('setting_id', $setting->id)
-            ->with('hashtag') 
+            ->with('hashtag')
             ->get()
             ->pluck('hashtag.hashtag')
             ->toArray();

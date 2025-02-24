@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Services\UserState;
 use App\Models\Hashtag;
 use App\Models\Setting_Hashtag;
+use App\Models\Chat;
 
 class UpdateTimeHandler
 {
@@ -34,6 +35,26 @@ class UpdateTimeHandler
                         . $this->getAttachedHashtags($settings) . "\n\n"
                         . "Что вы хотите обновить?",
                 ]);
+
+                $chats = Chat::all();
+
+                UserState::setState($userId, 'settings');
+
+                // Формируем сообщение об изменении настроек
+                $message = "Настройки были обновлены:\n"
+                    . "Время сбора был обнавлён: {$settings->report_time}\n";
+
+                    foreach ($chats as $chat) {
+                        try {
+                            $telegram->getChat(['chat_id' => $chat->chat_id]); // Проверяем, существует ли чат
+                            $telegram->sendMessage([
+                                'chat_id' => $chat->chat_id,
+                                'text' => $message,
+                            ]);
+                        } catch (\Telegram\Bot\Exceptions\TelegramResponseException $e) {
+                            \Log::error('Ошибка: ' . $e->getMessage());
+                        }
+                    }
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,

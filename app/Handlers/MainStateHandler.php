@@ -10,6 +10,8 @@ use Telegram\Bot\BotsManager;
 use App\Models\Setting;
 use App\Models\Hashtag;
 use App\Models\Setting_Hashtag;
+use App\Models\Report_Detail;
+use App\Models\Report;
 class MainStateHandler
 {
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, BotsManager $botsManager)
@@ -69,17 +71,54 @@ class MainStateHandler
                     break;
 
                 case 'Проверить отчеты':
+                    // Отправляем сообщение о начале проверки
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
-                        'text' => 'Вы выбрали проверку отчетов.',
+                        'text' => 'Вы выбрали проверку отчетов. Начинаю проверку...',
                     ]);
-                    break;
 
-                case 'Получить отчеты':
+                    // Получаем все чаты
+                    $chats = Chat::all();
+
+                    $settings = Setting::all()->last();
+
+                    $hashtags = Hashtag::whereHas('Setting_Hashtag', function ($query) use ($settings) {
+                        $query->where('setting_id', $settings->id);
+                    })->get();
+
+                    // Формируем сообщение с результатами проверки
+                    $message = "Результаты проверки отчетов:\n\n";
+
+                    foreach ($chats as $chat) {
+                        $message .= "Чат: " . $chat->name . "\n";
+
+                        foreach ($hashtags as $hashtag) {
+                            // Проверяем, есть ли отчет для данного чата и хэштега
+                            $reportDetail = Report_Detail::where('chat_id', $chat->id)
+                                ->where('hashtag_id', $hashtag->id)
+                                ->first();
+
+                            // Добавляем информацию о хэштеге и статусе отчета
+                            $message .= "Хэштег: " . $hashtag->hashtag . " - ";
+
+                            if ($reportDetail) {
+                                // Если отчет есть, добавляем ссылку на Google-таблицу
+                                $message .= "есть отчёт. Ссылка: " . $reportDetail->report->google_sheet_url . "\n";
+                            } else {
+                                // Если отчета нет
+                                $message .= "нет отчёта\n";
+                            }
+                        }
+
+                        $message .= "\n"; // Разделитель между чатами
+                    }
+
+                    // Отправляем сообщение с результатами
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
-                        'text' => 'Вы выбрали получение отчетов.',
+                        'text' => $message,
                     ]);
+
                     break;
                 case 'Помощь':
                     $telegram->sendMessage([
@@ -87,8 +126,7 @@ class MainStateHandler
                         'text' => "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
                             "1. Получить список чатов - Позволяет получить список доступных чатов.\n" .
                             "2. Настройка сбора отчетов - Позволяет настроить параметры сбора отчетов.\n" .
-                            "3. Проверить отчеты - Проверяет текущие отчеты и их статус.\n" .
-                            "4. Получить отчеты - Получает и отображает отчеты по заданным параметрам.\n",
+                            "3. Проверить отчеты - Проверяет текущие отчеты и их статус.\n",
                     ]);
                     break;
 
@@ -120,7 +158,7 @@ class MainStateHandler
     {
         // Используем модель Setting_Hashtag для получения привязанных хэштегов
         $attachedHashtags = Setting_Hashtag::where('setting_id', $setting->id)
-            ->with('hashtag') 
+            ->with('hashtag')
             ->get()
             ->pluck('hashtag.hashtag')
             ->toArray();
