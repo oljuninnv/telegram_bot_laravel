@@ -81,10 +81,11 @@ class SendReports extends Command
         }
 
         // Обновляем current_period_end_date
-        $dayOfWeekNumber = array_search($reportDay, DayOfWeekEnums::getAllDays());
+        $dayOfWeekNumber = array_search($reportDay, array_map(fn($day) => $day->value, DayOfWeekEnums::getAllDays()));
+        \Log::info($dayOfWeekNumber);
         $newPeriodEndDate = Carbon::parse($currentPeriodEndDate)
             ->addWeeks($weeksInPeriod)
-            ->next($dayOfWeekNumber)
+            ->next($dayOfWeekNumber+1)
             ->setTimeFromTimeString($reportTime)
             ->subSecond();
 
