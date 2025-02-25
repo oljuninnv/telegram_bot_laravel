@@ -8,10 +8,11 @@ use App\Models\Setting_Hashtag;
 use App\Models\Setting;
 use App\Keyboards;
 use App\Services\UserState;
-use App\Models\Chat;
+use App\Helpers\MessageHelper;
 
 class AttachHashtagHandler
 {
+    use MessageHelper;
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
         $hashtag = trim($messageText);
@@ -30,23 +31,11 @@ class AttachHashtagHandler
                 'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
             ]);
             UserState::setState($userId, 'updateHashtags');
-            $chats = Chat::all();
 
-            // Формируем сообщение об изменении настроек
             $message = "Настройки были обновлены:\n"
                 . "Добавлен новый хэштег: {$hashtag}\n";
 
-            foreach ($chats as $chat) {
-                try {
-                    $telegram->getChat(['chat_id' => $chat->chat_id]); // Проверяем, существует ли чат
-                    $telegram->sendMessage([
-                        'chat_id' => $chat->chat_id,
-                        'text' => $message,
-                    ]);
-                } catch (\Telegram\Bot\Exceptions\TelegramResponseException $e) {
-                    \Log::error('Ошибка: ' . $e->getMessage());
-                }
-            }
+            $this->sendMessageToAllChats($telegram, $message);
         } else {
             $telegram->sendMessage([
                 'chat_id' => $chatId,

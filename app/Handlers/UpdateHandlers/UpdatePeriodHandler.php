@@ -6,11 +6,11 @@ use Telegram\Bot\Api;
 use App\Models\Setting;
 use App\Services\UserState;
 use App\Helpers\HashtagHelper;
-use App\Models\Chat;
+use App\Helpers\MessageHelper;
 
 class UpdatePeriodHandler
 {
-    use HashtagHelper;
+    use HashtagHelper,MessageHelper;
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
         $settings = Setting::latest()->first();
@@ -35,26 +35,14 @@ class UpdatePeriodHandler
                         . $this->getAttachedHashtags($settings) . "\n\n"
                         . "Что вы хотите обновить?",
                 ]);
-                $chats = Chat::all();
 
                 UserState::setState($userId, 'settings');
 
-                // Формируем сообщение об изменении настроек
                 $message = "Настройки были обновлены:\n"
                     . "Период сбора был обнавлён, теперь он осуществляется каждые {$settings->weeks_in_period} недели\n"
                     . "Они вступят в силу после окончания текущего периода\n";
 
-                    foreach ($chats as $chat) {
-                        try {
-                            $telegram->getChat(['chat_id' => $chat->chat_id]); // Проверяем, существует ли чат
-                            $telegram->sendMessage([
-                                'chat_id' => $chat->chat_id,
-                                'text' => $message,
-                            ]);
-                        } catch (\Telegram\Bot\Exceptions\TelegramResponseException $e) {
-                            \Log::error('Ошибка: ' . $e->getMessage());
-                        }
-                    }
+                $this->sendMessageToAllChats($telegram, $message);
 
             } else {
                 $telegram->sendMessage([

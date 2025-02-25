@@ -6,11 +6,11 @@ use Telegram\Bot\Api;
 use App\Models\Setting;
 use App\Services\UserState;
 use App\Helpers\HashtagHelper;
-use App\Models\Chat;
+use App\Helpers\MessageHelper;
 
 class UpdateTimeHandler
 {
-    use HashtagHelper;
+    use HashtagHelper, MessageHelper;
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
         $settings = Setting::latest()->first();
@@ -36,25 +36,13 @@ class UpdateTimeHandler
                         . "Что вы хотите обновить?",
                 ]);
 
-                $chats = Chat::all();
-
                 UserState::setState($userId, 'settings');
 
                 $message = "Настройки были обновлены:\n"
                     . "Время сбора был обнавлён: {$settings->report_time}\n"
                     . "Они вступят в силу после окончания текущего периода\n";
 
-                    foreach ($chats as $chat) {
-                        try {
-                            $telegram->getChat(['chat_id' => $chat->chat_id]);
-                            $telegram->sendMessage([
-                                'chat_id' => $chat->chat_id,
-                                'text' => $message,
-                            ]);
-                        } catch (\Telegram\Bot\Exceptions\TelegramResponseException $e) {
-                            \Log::error('Ошибка: ' . $e->getMessage());
-                        }
-                    }
+                $this->sendMessageToAllChats($telegram, $message);
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
