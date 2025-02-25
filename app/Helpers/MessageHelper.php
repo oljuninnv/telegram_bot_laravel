@@ -29,4 +29,19 @@ trait MessageHelper
             }
         }
     }
+
+    /**
+     * Отправить сообщение в чат.
+     *
+     * @param Api $telegram
+     * @param int $chatId
+     * @param string $text
+     */
+    protected function sendMessage(Api $telegram, int $chatId, string $text)
+    {
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => $text,
+        ]);
+    }
 }

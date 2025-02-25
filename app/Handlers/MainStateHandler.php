@@ -9,11 +9,14 @@ use App\Models\Chat;
 use Telegram\Bot\BotsManager;
 use App\Models\Setting;
 use App\Models\Hashtag;
-use App\Models\Setting_Hashtag;
+use App\Helpers\HashtagHelper;
 use App\Models\Report_Detail;
 use Carbon\Carbon;
+
 class MainStateHandler
 {
+    use HashtagHelper;
+
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, BotsManager $botsManager)
     {
         $update = $telegram->getWebhookUpdate();
@@ -32,101 +35,19 @@ class MainStateHandler
         if (!$isBotCommand) {
             switch ($messageText) {
                 case 'Получить список чатов':
-                    $chats = Chat::all();
-                    $response = '';
-                    foreach ($chats as $chat) {
-                        $response .= "\nНазвание: {$chat->name} - ссылка: " . (!empty($chat->chat_link) ? $chat->chat_link : 'отсутствует');
-                    }
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => $response,
-                    ]);
+                    $this->handleGetChatsList($telegram, $chatId);
                     break;
-                case 'Настройка сбора отчетов':
-                    UserState::setState($userId, 'settings');
-                    $set = Setting::all()->last();
 
-                    if (!$set) {
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => 'Настройки отсутствуют. Хотите создать новую?',
-                            'reply_markup' => Keyboards::settingsAdminKeyboard(),
-                        ]);
-                    } else {
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => "Текущие настройки:\n"
-                                . "День недели: {$set->report_day}\n"
-                                . "Время: {$set->report_time}\n"
-                                . "Период сбора: {$set->weeks_in_period}\n\n"
-                                . "Все хэштеги в базе данных:\n"
-                                . $this->getAllHashtags() . "\n\n"
-                                . "Подключённые хэштеги:\n"
-                                . $this->getAttachedHashtags($set) . "\n\n"
-                                . "Что вы хотите обновить?",
-                            'reply_markup' => Keyboards::updateSettingsKeyboard(),
-                        ]);
-                    }
+                case 'Настройка сбора отчетов':
+                    $this->handleReportSettings($telegram, $chatId, $userId);
                     break;
 
                 case 'Проверить отчеты':
-
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Вы выбрали проверку отчетов. Начинаю проверку...',
-                    ]);
-
-                    // Получаем все чаты
-                    $chats = Chat::all();
-
-                    $settings = Setting::all()->last();
-
-                    $hashtags = Hashtag::whereHas('Setting_Hashtag', function ($query) use ($settings) {
-                        $query->where('setting_id', $settings->id);
-                    })->get();
-
-                    $startDate = Carbon::parse($settings->current_period_end_date)
-                        ->subWeeks($settings->weeks_in_period)
-                        ->setTimeFromTimeString($settings->report_time);
-                    $endDate = $settings->current_period_end_date;
-
-                    $message = "Результаты проверки отчетов:\n\n";
-
-                    foreach ($chats as $chat) {
-                        $message .= "Чат: " . $chat->name . "\n";
-
-                        foreach ($hashtags as $hashtag) {
-                            $reportDetail = Report_Detail::where('chat_id', $chat->id)
-                                ->where('hashtag_id', $hashtag->id)
-                                ->whereBetween('created_at', [$startDate, $endDate])
-                                ->first();
-
-                            // Добавляем информацию о хэштеге и статусе отчета
-                            $message .= "Хэштег: " . $hashtag->hashtag . " - ";
-
-                            if ($reportDetail) {
-                                $message .= "есть отчёт. Ссылка: " . $reportDetail->report->google_sheet_url . "\n";
-                            } else {
-                                $message .= "нет отчёта\n";
-                            }
-                        }
-
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => $message,
-                        ]);
-
-                        $message = "Результаты проверки отчетов:\n\n";
-                    }
+                    $this->handleCheckReports($telegram, $chatId);
                     break;
+
                 case 'Помощь':
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
-                            "1. Получить список чатов - Позволяет получить список доступных чатов.\n" .
-                            "2. Настройка сбора отчетов - Позволяет настроить параметры сбора отчетов.\n" .
-                            "3. Проверить отчеты - Проверяет отчёты за текущий период и их статус.\n",
-                    ]);
+                    $this->handleHelp($telegram, $chatId);
                     break;
 
                 default:
@@ -140,32 +61,104 @@ class MainStateHandler
         }
     }
 
-    private function getAllHashtags(): string
+    private function handleGetChatsList(Api $telegram, int $chatId)
     {
-        $hashtags = Hashtag::all();
-        $hashtagList = [];
+        $chats = Chat::all();
+        $response = '';
 
-        foreach ($hashtags as $hashtag) {
-            $hashtagList[] = $hashtag->hashtag;
+        foreach ($chats as $chat) {
+            $response .= "\nНазвание: {$chat->name} - ссылка: " . (!empty($chat->chat_link) ? $chat->chat_link : 'отсутствует');
         }
 
-        return implode(', ', $hashtagList);
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => $response,
+        ]);
     }
 
-    // Метод для получения подключённых хэштегов к текущей настройке
-    private function getAttachedHashtags(Setting $setting): string
+    private function handleReportSettings(Api $telegram, int $chatId, int $userId)
     {
-        // Используем модель Setting_Hashtag для получения привязанных хэштегов
-        $attachedHashtags = Setting_Hashtag::where('setting_id', $setting->id)
-            ->with('hashtag')
-            ->get()
-            ->pluck('hashtag.hashtag')
-            ->toArray();
+        UserState::setState($userId, 'settings');
+        $set = Setting::all()->last();
 
-        if (!empty($attachedHashtags)) {
-            return implode(', ', $attachedHashtags);
+        if (!$set) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'Настройки отсутствуют. Создайте новую.',
+                'reply_markup' => Keyboards::settingsAdminKeyboard(),
+            ]);
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "Текущие настройки:\n"
+                    . "День недели: {$set->report_day}\n"
+                    . "Время: {$set->report_time}\n"
+                    . "Период сбора: {$set->weeks_in_period}\n\n"
+                    . "Все хэштеги в базе данных:\n"
+                    . $this->getAllHashtags() . "\n\n"
+                    . "Подключённые хэштеги:\n"
+                    . $this->getAttachedHashtags($set) . "\n\n"
+                    . "Что вы хотите обновить?",
+                'reply_markup' => Keyboards::updateSettingsKeyboard(),
+            ]);
         }
+    }
 
-        return 'Нет подключённых хэштегов';
+    private function handleCheckReports(Api $telegram, int $chatId)
+    {
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => 'Вы выбрали проверку отчетов. Начинаю проверку...',
+        ]);
+
+        $chats = Chat::all();
+        $settings = Setting::all()->last();
+        $hashtags = Hashtag::whereHas('Setting_Hashtag', function ($query) use ($settings) {
+            $query->where('setting_id', $settings->id);
+        })->get();
+
+        $startDate = Carbon::parse($settings->current_period_end_date)
+            ->subWeeks($settings->weeks_in_period)
+            ->setTimeFromTimeString($settings->report_time);
+        $endDate = $settings->current_period_end_date;
+
+        $message = "Результаты проверки отчетов:\n\n";
+
+        foreach ($chats as $chat) {
+            $message .= "Чат: " . $chat->name . "\n";
+
+            foreach ($hashtags as $hashtag) {
+                $reportDetail = Report_Detail::where('chat_id', $chat->id)
+                    ->where('hashtag_id', $hashtag->id)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->first();
+
+                $message .= "Хэштег: " . $hashtag->hashtag . " - ";
+
+                if ($reportDetail) {
+                    $message .= "есть отчёт. Ссылка: " . $reportDetail->report->google_sheet_url . "\n";
+                } else {
+                    $message .= "нет отчёта\n";
+                }
+            }
+
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => $message,
+            ]);
+
+            $message = "Результаты проверки отчетов:\n\n";
+        }
+    }
+
+    private function handleHelp(Api $telegram, int $chatId)
+    {
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
+                "1. Получить список чатов - Позволяет получить список доступных чатов.\n" .
+                "2. Настройка сбора отчетов - Позволяет настроить параметры сбора отчетов.\n" .
+                "3. Проверить отчеты - Проверяет отчёты за текущий период и их статус.\n",
+        ]);
     }
 }
