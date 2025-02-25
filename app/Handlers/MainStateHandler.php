@@ -11,7 +11,7 @@ use App\Models\Setting;
 use App\Models\Hashtag;
 use App\Models\Setting_Hashtag;
 use App\Models\Report_Detail;
-use App\Models\Report;
+use Carbon\Carbon;
 class MainStateHandler
 {
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, BotsManager $botsManager)
@@ -71,7 +71,7 @@ class MainStateHandler
                     break;
 
                 case 'Проверить отчеты':
-                    // Отправляем сообщение о начале проверки
+
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
                         'text' => 'Вы выбрали проверку отчетов. Начинаю проверку...',
@@ -86,6 +86,11 @@ class MainStateHandler
                         $query->where('setting_id', $settings->id);
                     })->get();
 
+                    $startDate = Carbon::parse($settings->current_period_end_date)
+                        ->subWeeks($settings->weeks_in_period)
+                        ->setTimeFromTimeString($settings->report_time);
+                    $endDate = $settings->current_period_end_date;
+
                     // Формируем сообщение с результатами проверки
                     $message = "Результаты проверки отчетов:\n\n";
 
@@ -96,6 +101,7 @@ class MainStateHandler
                             // Проверяем, есть ли отчет для данного чата и хэштега
                             $reportDetail = Report_Detail::where('chat_id', $chat->id)
                                 ->where('hashtag_id', $hashtag->id)
+                                ->whereBetween('created_at', [$startDate, $endDate])
                                 ->first();
 
                             // Добавляем информацию о хэштеге и статусе отчета
@@ -110,15 +116,13 @@ class MainStateHandler
                             }
                         }
 
-                        $message .= "\n"; // Разделитель между чатами
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => $message,
+                        ]);
+
+                        $message = "Результаты проверки отчетов:\n\n";
                     }
-
-                    // Отправляем сообщение с результатами
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => $message,
-                    ]);
-
                     break;
                 case 'Помощь':
                     $telegram->sendMessage([
@@ -126,7 +130,7 @@ class MainStateHandler
                         'text' => "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
                             "1. Получить список чатов - Позволяет получить список доступных чатов.\n" .
                             "2. Настройка сбора отчетов - Позволяет настроить параметры сбора отчетов.\n" .
-                            "3. Проверить отчеты - Проверяет текущие отчеты и их статус.\n",
+                            "3. Проверить отчеты - Проверяет отчёты за текущий период и их статус.\n",
                     ]);
                     break;
 

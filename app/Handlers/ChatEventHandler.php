@@ -101,11 +101,12 @@ class ChatEventHandler
                                 $endDate = Carbon::now()->endOfWeek()->setTimeFromTimeString($reportTime)->subHour();
                             } else {
                                 $reportTime = $settings->report_time;
-                                $startDate = Carbon::now()->startOfWeek()->setTimeFromTimeString($reportTime);
                                 $endDate = $settings->current_period_end_date;
+                                $startDate = $startDate = Carbon::parse($endDate)
+                                    ->subWeeks($settings->weeks_in_period) 
+                                    ->setTimeFromTimeString($reportTime); 
                             }
 
-                            // Создаем отчет
                             $report = Report::create([
                                 'start_date' => $startDate,
                                 'end_date' => $endDate,

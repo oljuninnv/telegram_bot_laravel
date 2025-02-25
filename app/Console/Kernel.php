@@ -27,7 +27,6 @@ class Kernel extends ConsoleKernel
                 return Carbon::now()->greaterThanOrEqualTo($settings->current_period_end_date);
             })->everyMinute();
 
-        \Log::info('Команда reports:send запланирована.');
     }
     /**
      * Register the commands for the application.

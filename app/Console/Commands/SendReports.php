@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Setting;
-use App\Models\Report;
 use App\Models\Chat;
 use App\Models\Hashtag;
 use App\Models\Report_Detail;
@@ -17,7 +16,7 @@ use Google\Service\Sheets;
 class SendReports extends Command
 {
     protected $signature = 'reports:send';
-    protected $description = 'Send reports for the past period';
+    protected $description = 'Отправляет данные об отчётах за текущий период';
 
     public function handle()
     {
@@ -40,10 +39,6 @@ class SendReports extends Command
             ->subWeeks($weeksInPeriod) // Вычитаем weeksInPeriod
             ->setTimeFromTimeString($reportTime); // Устанавливаем время reportTime
         $endDate = $currentPeriodEndDate;
-
-        // Получаем все отчёты за период
-        $reports = Report::whereBetween('start_date', [$startDate, $endDate])->get();
-        \Log::info('Найдено отчетов за период ' . $startDate . '-' . $endDate . '' . ':' . $reports->count());
 
         // Получаем хэштеги, которые нужно искать
         $hashtags = Hashtag::whereHas('Setting_Hashtag', function ($query) use ($settings) {
@@ -102,7 +97,6 @@ class SendReports extends Command
                 'chat_id' => env('TELEGRAM_USER_ADMIN_ID'),
                 'text' => $message,
             ]);
-            \Log::info('Отправлено сообщение для хэштега: ' . $hashtag->hashtag);
         }
 
         // Создаем Google таблицу
@@ -157,7 +151,7 @@ class SendReports extends Command
         if ($dayOfWeekNumber + 1 < 7) {
             $dayOfWeekNumber = 0;
         }
-        \Log::info($dayOfWeekNumber);
+
         $newPeriodEndDate = Carbon::parse($currentPeriodEndDate)
             ->addWeeks($weeksInPeriod)
             ->next($dayOfWeekNumber + 1)
@@ -169,6 +163,5 @@ class SendReports extends Command
         ]);
 
         $this->info('Reports sent successfully.');
-        \Log::info('Все отчёты успешно отправлены.');
     }
 }

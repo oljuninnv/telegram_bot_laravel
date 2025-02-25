@@ -100,16 +100,13 @@ class CreateSettingHandler
                     $reportTime = SettingState::getReportTime($userId);
                     $weeksInPeriod = (int) $messageText;
 
-                    // Преобразуем день недели в числовой формат
                     $dayOfWeekNumber = array_search($dayOfWeek, DayOfWeekEnums::getAllDays());
 
-                    // Вычисляем current_period_end_date
                     $currentPeriodEndDate = Carbon::now()
-                        ->next($dayOfWeekNumber) // Следующий указанный день недели
+                        ->next($dayOfWeekNumber) 
                         ->setTimeFromTimeString($reportTime)
-                        ->subSecond(); // Уменьшаем время на 1 секунду
+                        ->subSecond(); 
 
-                    // Создаем настройку
                     Setting::create([
                         'report_day' => $dayOfWeek,
                         'report_time' => $reportTime,
