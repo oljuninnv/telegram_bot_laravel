@@ -20,8 +20,3 @@ Route::get('/', function () {
 });
 
 Route::post('/telegram-webhook', [MessageController::class, '__invoke']); //запуск команды
-
-use App\Http\Controllers\GoogleSheetsController;
-
-Route::get('/fill-sheet', [GoogleSheetsController::class, 'fillSheet']);
-

@@ -40,14 +40,13 @@ class UpdateTimeHandler
 
                 UserState::setState($userId, 'settings');
 
-                // Формируем сообщение об изменении настроек
                 $message = "Настройки были обновлены:\n"
                     . "Время сбора был обнавлён: {$settings->report_time}\n"
                     . "Они вступят в силу после окончания текущего периода\n";
 
                     foreach ($chats as $chat) {
                         try {
-                            $telegram->getChat(['chat_id' => $chat->chat_id]); // Проверяем, существует ли чат
+                            $telegram->getChat(['chat_id' => $chat->chat_id]);
                             $telegram->sendMessage([
                                 'chat_id' => $chat->chat_id,
                                 'text' => $message,

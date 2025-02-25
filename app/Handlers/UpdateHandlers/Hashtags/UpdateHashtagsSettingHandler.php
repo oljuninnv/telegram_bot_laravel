@@ -25,14 +25,11 @@ class UpdateHashtagsSettingHandler
             return;
         }
 
-        // Получаем хэштег, который нужно отвязать
         $hashtagToDetach = trim($messageText);
 
-        // Ищем хэштег в базе данных
         $hashtagModel = Hashtag::where('hashtag', $hashtagToDetach)->first();
 
         if ($hashtagModel) {
-            // Ищем запись в связующей таблице
             $settingHashtag = Setting_Hashtag::where('setting_id', $settings->id)
                 ->where('hashtag_id', $hashtagModel->id)
                 ->first();
@@ -48,13 +45,12 @@ class UpdateHashtagsSettingHandler
                 UserState::setState($userId, 'updateHashtags');
                 $chats = Chat::all();
 
-                // Формируем сообщение об изменении настроек
                 $message = "Настройки были обновлены:\n"
                     . "Хэштег {$hashtagToDetach} был отвязан\n";
 
                     foreach ($chats as $chat) {
                         try {
-                            $telegram->getChat(['chat_id' => $chat->chat_id]); // Проверяем, существует ли чат
+                            $telegram->getChat(['chat_id' => $chat->chat_id]); 
                             $telegram->sendMessage([
                                 'chat_id' => $chat->chat_id,
                                 'text' => $message,

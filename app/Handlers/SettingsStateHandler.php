@@ -109,7 +109,7 @@ class SettingsStateHandler
                         'text' => 'Выберите действие для настройки хэштегов:',
                         'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
                     ]);
-                    UserState::setState($userId, 'updateHashtags'); // Устанавливаем состояние для обновления хэштегов
+                    UserState::setState($userId, 'updateHashtags');
                     break;
 
                 case 'Назад':

@@ -20,7 +20,6 @@ class MainStateHandler
         $botsManager->bot()->commandsHandler(true);
         $isBotCommand = false;
 
-        // Проверка является ли текст командой
         if (!empty($update->message->entities)) {
             foreach ($update->message->entities as $entity) {
                 if ($entity->type === 'bot_command') {
@@ -91,14 +90,12 @@ class MainStateHandler
                         ->setTimeFromTimeString($settings->report_time);
                     $endDate = $settings->current_period_end_date;
 
-                    // Формируем сообщение с результатами проверки
                     $message = "Результаты проверки отчетов:\n\n";
 
                     foreach ($chats as $chat) {
                         $message .= "Чат: " . $chat->name . "\n";
 
                         foreach ($hashtags as $hashtag) {
-                            // Проверяем, есть ли отчет для данного чата и хэштега
                             $reportDetail = Report_Detail::where('chat_id', $chat->id)
                                 ->where('hashtag_id', $hashtag->id)
                                 ->whereBetween('created_at', [$startDate, $endDate])
@@ -108,10 +105,8 @@ class MainStateHandler
                             $message .= "Хэштег: " . $hashtag->hashtag . " - ";
 
                             if ($reportDetail) {
-                                // Если отчет есть, добавляем ссылку на Google-таблицу
                                 $message .= "есть отчёт. Ссылка: " . $reportDetail->report->google_sheet_url . "\n";
                             } else {
-                                // Если отчета нет
                                 $message .= "нет отчёта\n";
                             }
                         }

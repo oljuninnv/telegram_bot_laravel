@@ -9,12 +9,6 @@ class Chat extends Model
 {
     use HasFactory;
 
-    // protected $fillable = [
-    //     'id',
-    //     'name',
-    //     'chat_link',
-    // ];
-
     protected $guarded = [];
 
     public function reportDetails()
