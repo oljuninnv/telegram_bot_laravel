@@ -25,7 +25,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('reports:send')
             ->when(function () use ($settings) {
                 return Carbon::now()->greaterThanOrEqualTo($settings->current_period_end_date);
-            })->everyMinute();
+            })->hourly();
 
     }
     /**
