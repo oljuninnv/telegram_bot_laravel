@@ -59,11 +59,11 @@ class UpdateHashtagsHandler
                 break;
 
             case 'Назад':
-                UserState::resetState($userId);
+                UserState::setState($userId, 'settings');
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => 'Вы вернулись в главное меню.',
-                    'reply_markup' => Keyboards::mainAdminKeyboard(),
+                    'text' => 'Вы вернулись в меню настроек',
+                    'reply_markup' => Keyboards::updateSettingsKeyboard(),
                 ]);
                 break;
 
