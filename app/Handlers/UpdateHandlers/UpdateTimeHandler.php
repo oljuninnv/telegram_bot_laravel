@@ -5,15 +5,15 @@ namespace App\Handlers\UpdateHandlers;
 use Telegram\Bot\Api;
 use App\Models\Setting;
 use App\Services\UserState;
-use App\Models\Hashtag;
-use App\Models\Setting_Hashtag;
+use App\Helpers\HashtagHelper;
 use App\Models\Chat;
 
 class UpdateTimeHandler
 {
+    use HashtagHelper;
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
-        $settings = Setting::all()->last();
+        $settings = Setting::latest()->first();
 
         if ($settings) {
             if (preg_match('/^(2[0-3]|[01]?[0-9]):([0-5][0-9])$/', $messageText)) {
@@ -67,33 +67,5 @@ class UpdateTimeHandler
                 'text' => 'Настройки отсутствуют. Пожалуйста, создайте новую настройку.',
             ]);
         }
-    }
-    private function getAllHashtags(): string
-    {
-        $hashtags = Hashtag::all();
-        $hashtagList = [];
-
-        foreach ($hashtags as $hashtag) {
-            $hashtagList[] = $hashtag->hashtag;
-        }
-
-        return implode(', ', $hashtagList);
-    }
-
-    // Метод для получения подключённых хэштегов к текущей настройке
-    private function getAttachedHashtags(Setting $setting): string
-    {
-        // Используем модель Setting_Hashtag для получения привязанных хэштегов
-        $attachedHashtags = Setting_Hashtag::where('setting_id', $setting->id)
-            ->with('hashtag') 
-            ->get()
-            ->pluck('hashtag.hashtag')
-            ->toArray();
-
-        if (!empty($attachedHashtags)) {
-            return implode(', ', $attachedHashtags);
-        }
-
-        return 'Нет подключённых хэштегов';
     }
 }
