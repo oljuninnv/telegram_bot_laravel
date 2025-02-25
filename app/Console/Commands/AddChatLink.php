@@ -17,7 +17,6 @@ class AddChatLink extends Command
         $telegram = new Api(config('telegram.bot_token'));
         $fromId = $this->getUpdate()->message->from->id;
 
-        // Проверяем, является ли пользователь администратором
         if ($fromId != env('TELEGRAM_USER_ADMIN_ID')) {
             $response = 'Вам не доступен функционал этой команды';
             $telegram->sendMessage([
