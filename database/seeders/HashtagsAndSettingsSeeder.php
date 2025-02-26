@@ -28,8 +28,8 @@ class HashtagsAndSettingsSeeder extends Seeder
 
         // Заполнение таблицы hashtags
         $hashtags = [
-            ['id' => 1, 'hashtag' => '#митрепорт'],
-            ['id' => 2, 'hashtag' => '#еженедельныйотчет'],
+            ['id' => 1, 'hashtag' => '#митрепорт', 'report_title' => 'митрепорт'],
+            ['id' => 2, 'hashtag' => '#еженедельныйотчет','report_title' => 'еженедельныйотчет'],
         ];
 
         foreach ($hashtags as $hashtag) {

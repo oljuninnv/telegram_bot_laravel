@@ -103,6 +103,25 @@ class ChatEventHandler
                 }
             }
         }
+        else if ($update?->message?->caption && $update?->message?->caption_entities)
+        {
+            foreach ($update->message->caption_entities as $entity) {
+                if ($entity->type === 'hashtag') {
+
+                    $hashtagText = $update->message->caption;
+                    $allowedHashtagIds = Setting_Hashtag::pluck('hashtag_id')->toArray();
+                    $reportTitle = $update->message->document->file_name; 
+                    $reportTitle = strtok($reportTitle, '.'); 
+                    $hashtag = Hashtag::where('hashtag', $hashtagText)
+                        ->whereIn('id', $allowedHashtagIds)
+                        ->where('report_title',$reportTitle)
+                        ->first();
+                    if ($hashtag) {
+                        $this->handleReportSubmission($telegram, $update, $hashtag, "");
+                    }
+                }
+            }
+        }
     }
 
     private function handleReportSubmission(Api $telegram, $update, $hashtag, $googleSheetUrl)

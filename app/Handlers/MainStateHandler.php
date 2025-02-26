@@ -136,7 +136,13 @@ class MainStateHandler
                 $message .= "Хэштег: " . $hashtag->hashtag . " - ";
 
                 if ($reportDetail) {
-                    $message .= "есть отчёт. Ссылка: " . $reportDetail->report->google_sheet_url . "\n";
+                    if($reportDetail->report->google_sheet_url){
+                        $message .= "есть отчёт. Ссылка: " . $reportDetail->report->google_sheet_url . "\n";
+                    }
+                    else{
+                        $message .= "Ссылка отсутствует. Отчёт представлен документом в чате \n";
+                    }
+                    
                 } else {
                     $message .= "нет отчёта\n";
                 }

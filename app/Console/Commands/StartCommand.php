@@ -38,7 +38,7 @@ class StartCommand extends Command
                 'text' => $response,
             ]);
         } else {
-            $response = "Добрый день, рад вас видеть";
+            $response = "Добрый день. Вы не являетесь администратором, поэтому функционал бота вам не доступен. ";
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => $response

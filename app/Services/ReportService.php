@@ -22,16 +22,25 @@ class ReportService
      */
     public function createReport(string $googleSheetUrl, Chat $chat, Hashtag $hashtag, Carbon $startDate, Carbon $endDate)
     {
-        $report = Report::create([
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'google_sheet_url' => $googleSheetUrl,
-        ]);
+        $reportDetail = Report_Detail::join('reports', 'report_details.report_id', '=', 'reports.id')
+        ->where('reports.start_date', $startDate)
+        ->where('reports.end_date', $endDate)
+        ->where('report_details.chat_id', $chat->id)
+        ->where('report_details.hashtag_id', $hashtag->id)
+        ->first();
 
-        Report_Detail::create([
-            'report_id' => $report->id,
-            'chat_id' => $chat->id,
-            'hashtag_id' => $hashtag->id,
-        ]);
+        if (!$reportDetail){
+            $report = Report::create([
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'google_sheet_url' => $googleSheetUrl,
+            ]);
+    
+            Report_Detail::create([
+                'report_id' => $report->id,
+                'chat_id' => $chat->id,
+                'hashtag_id' => $hashtag->id,
+            ]);
+        }
     }
 }
