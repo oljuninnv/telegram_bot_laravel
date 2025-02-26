@@ -10,7 +10,7 @@ use Telegram\Bot\BotsManager;
 use App\Models\Setting;
 use App\Models\Hashtag;
 use App\Helpers\HashtagHelper;
-use App\Models\Report_Detail;
+use App\Models\Report;
 use Carbon\Carbon;
 
 class MainStateHandler
@@ -64,17 +64,34 @@ class MainStateHandler
     private function handleGetChatsList(Api $telegram, int $chatId)
     {
         $chats = Chat::all();
-        $response = '';
 
-        foreach ($chats as $chat) {
-            $response .= "\nНазвание: {$chat->name} - ссылка: " . (!empty($chat->chat_link) ? $chat->chat_link : 'отсутствует');
+        if ($chats->isEmpty()) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'Список чатов пуст.',
+            ]);
+            return;
         }
 
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => $response,
-        ]);
+        $response = '';
+        foreach ($chats as $chat) {
+            $chatLink = !empty($chat->chat_link) ? $chat->chat_link : 'отсутствует';
+            $response .= "Название: {$chat->name} - ссылка: {$chatLink}\n";
+        }
+
+        if (!empty($response)) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => $response,
+            ]);
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'Не удалось сформировать список чатов.',
+            ]);
+        }
     }
+
 
     private function handleReportSettings(Api $telegram, int $chatId, int $userId)
     {
@@ -112,6 +129,14 @@ class MainStateHandler
         ]);
 
         $chats = Chat::all();
+        if ($chats->isEmpty()) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'Список чатов пуст.',
+            ]);
+            return;
+        }
+
         $settings = Setting::all()->last();
         $hashtags = Hashtag::whereHas('Setting_Hashtag', function ($query) use ($settings) {
             $query->where('setting_id', $settings->id);
@@ -128,7 +153,7 @@ class MainStateHandler
             $message .= "Чат: " . $chat->name . "\n";
 
             foreach ($hashtags as $hashtag) {
-                $reportDetail = Report_Detail::where('chat_id', $chat->id)
+                $reportDetail = Report::where('chat_id', $chat->id)
                     ->where('hashtag_id', $hashtag->id)
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->first();
@@ -136,13 +161,12 @@ class MainStateHandler
                 $message .= "Хэштег: " . $hashtag->hashtag . " - ";
 
                 if ($reportDetail) {
-                    if($reportDetail->report->google_sheet_url){
+                    if ($reportDetail->report->google_sheet_url) {
                         $message .= "есть отчёт. Ссылка: " . $reportDetail->report->google_sheet_url . "\n";
-                    }
-                    else{
+                    } else {
                         $message .= "Ссылка отсутствует. Отчёт представлен документом в чате \n";
                     }
-                    
+
                 } else {
                     $message .= "нет отчёта\n";
                 }

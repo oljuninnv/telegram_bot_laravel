@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\Setting;
 use App\Models\Chat;
 use App\Models\Hashtag;
-use App\Models\Report_Detail;
+use App\Models\Report;
 use Carbon\Carbon;
 use Telegram\Bot\Api;
 use App\Enums\DayOfWeekEnums;
@@ -51,7 +51,7 @@ class SendReports extends Command
 
         // Формируем отчёт для каждого хэштега
         foreach ($hashtags as $hashtag) {
-            $reportDetails = Report_Detail::where('hashtag_id', $hashtag->id)
+            $reportDetails = Report::where('hashtag_id', $hashtag->id)
                 ->whereBetween('created_at', [$startDate, $currentPeriodEndDate])
                 ->get();
 

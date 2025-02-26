@@ -19,7 +19,7 @@ class Hashtag extends Model
 
     public function reportDetails()
     {
-        return $this->hasMany(Report_Detail::class);
+        return $this->hasMany(Report::class);
     }
 
     public function Setting_Hashtag()

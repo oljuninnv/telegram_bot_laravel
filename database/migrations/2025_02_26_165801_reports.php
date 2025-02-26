@@ -11,20 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('report_details', function (Blueprint $table) {
+        Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('report_id')->constrained('reports')->onDelete('cascade');
+            $table->string('sheet_url')->nullable();
+            $table->timestamp('start_date');
+            $table->timestamp('end_date'); 
             $table->foreignId('chat_id')->constrained('chats')->onDelete('cascade');
             $table->foreignId('hashtag_id')->constrained('hashtags')->onDelete('cascade');
             $table->timestamps();
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('report_details');
+        Schema::dropIfExists('reports');
     }
 };

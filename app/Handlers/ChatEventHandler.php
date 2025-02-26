@@ -11,7 +11,7 @@ use Telegram\Bot\BotsManager;
 use Carbon\Carbon;
 use App\Services\ReportService;
 use App\Helpers\MessageHelper;
-use App\Models\Report_Detail;
+use App\Models\Report;
 
 class ChatEventHandler
 {
@@ -57,7 +57,7 @@ class ChatEventHandler
     private function handleChatRemoval(int $chatId)
     {
         Chat::where('chat_id', $chatId)->delete();
-        Report_Detail::where('chat_id', $chatId)->delete();
+        Report::where('chat_id', $chatId)->delete();
     }
 
     private function handleNewChat(Api $telegram, $chatMember, int $chatId)

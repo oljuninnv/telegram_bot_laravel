@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Report;
-use App\Models\Report_Detail;
 use App\Models\Chat;
 use App\Models\Hashtag;
 use Carbon\Carbon;
@@ -22,25 +21,21 @@ class ReportService
      */
     public function createReport(string $googleSheetUrl, Chat $chat, Hashtag $hashtag, Carbon $startDate, Carbon $endDate)
     {
-        $reportDetail = Report_Detail::join('reports', 'report_details.report_id', '=', 'reports.id')
-        ->where('reports.start_date', $startDate)
-        ->where('reports.end_date', $endDate)
-        ->where('report_details.chat_id', $chat->id)
-        ->where('report_details.hashtag_id', $hashtag->id)
+        $report = Report::where('start_date', $startDate)
+        ->where('end_date', $endDate)
+        ->where('chat_id', $chat->id)
+        ->where('hashtag_id', $hashtag->id)
         ->first();
 
-        if (!$reportDetail){
+        if (!$report){
             $report = Report::create([
                 'start_date' => $startDate,
                 'end_date' => $endDate,
-                'google_sheet_url' => $googleSheetUrl,
+                'sheet_url' => $googleSheetUrl,
+                'chat_id' => $chat->id,
+                'hashtag_id' => $hashtag->id
             ]);
     
-            Report_Detail::create([
-                'report_id' => $report->id,
-                'chat_id' => $chat->id,
-                'hashtag_id' => $hashtag->id,
-            ]);
         }
     }
 }

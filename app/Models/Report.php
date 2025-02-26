@@ -14,11 +14,18 @@ class Report extends Model
     protected $fillable = [
         'start_date',
         'end_date',
-        'google_sheet_url',
+        'sheet_url',
+        'chat_id',
+        'hashtag_id',
     ];
 
-    public function reportDetails()
+    public function chat()
     {
-        return $this->hasMany(Report_Detail::class);
+        return $this->belongsTo(Chat::class);
+    }
+
+    public function hashtag()
+    {
+        return $this->belongsTo(Hashtag::class);
     }
 }
