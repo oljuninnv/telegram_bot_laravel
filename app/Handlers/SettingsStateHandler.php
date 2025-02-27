@@ -9,6 +9,7 @@ use Telegram\Bot\BotsManager;
 use App\Handlers\UpdateHandlers\UpdatePeriodHandler;
 use App\Handlers\UpdateHandlers\UpdateTimeHandler;
 use App\Handlers\UpdateHandlers\UpdateDayOfWeekHandler;
+use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
 use App\Models\Setting;
 
 class SettingsStateHandler
@@ -31,6 +32,7 @@ class SettingsStateHandler
         }
 
         if (!$isBotCommand) {
+            $settingsExist = Setting::exists();
             switch ($messageText) {
                 case 'Настроить сбор отчётов':
                     $telegram->sendMessage([
@@ -38,16 +40,31 @@ class SettingsStateHandler
                         'text' => 'Вы выбрали настройку сбора отчётов',
                         'reply_markup' => Keyboards::backAdminKeyboard(),
                     ]);
-                
-                    $settingsExist = Setting::exists();
-                
+
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
                         'text' => 'Выберите день недели сбора отчётов:',
                         'reply_markup' => Keyboards::getDaysOfWeekKeyboard($settingsExist),
                     ]);
-                
+
                     UserState::setState($userId, 'updateDayOfWeek');
+                    break;
+
+                case 'Обновить хэштеги':
+                    if (!$settingsExist) {
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => 'У вас нет настроек. Сначала создайте настройку.',
+                            'reply_markup' => Keyboards::settingsAdminKeyboard(),
+                        ]);
+                        return;
+                    }
+                    $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => 'Выберите действие для настройки хэштегов:',
+                        'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
+                    ]);
+                    UserState::setState($userId, 'updateHashtags');
                     break;
 
                 case 'Назад':
@@ -75,6 +92,11 @@ class SettingsStateHandler
 
                         case 'updateDayOfWeek':
                             $handler = new UpdateDayOfWeekHandler();
+                            $handler->handle($telegram, $chatId, $userId, $messageText);
+                            break;
+
+                        case 'updateHashtags':
+                            $handler = new UpdateHashtagsHandler();
                             $handler->handle($telegram, $chatId, $userId, $messageText);
                             break;
 
