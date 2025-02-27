@@ -31,11 +31,6 @@ class AttachHashtagHandler
                 'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
             ]);
             UserState::setState($userId, 'updateHashtags');
-
-            $message = "Настройки были обновлены:\n"
-                . "Добавлен новый хэштег: {$hashtag}\n";
-
-            $this->sendMessageToAllChats($telegram, $message);
         } else {
             $telegram->sendMessage([
                 'chat_id' => $chatId,

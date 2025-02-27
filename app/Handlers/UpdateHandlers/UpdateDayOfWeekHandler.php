@@ -46,12 +46,6 @@ class UpdateDayOfWeekHandler
                 ]);
 
                 UserState::setState($userId, 'settings');
-
-                $message = "Настройки были обновлены:\n"
-                    . "Сбор отчётов осуществляется в: {$settings->report_day}\n"
-                    . "Они вступят в силу после окончания текущего периода\n";
-
-                $this->sendMessageToAllChats($telegram, $message);
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,

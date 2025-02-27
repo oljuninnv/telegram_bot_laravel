@@ -37,13 +37,6 @@ class UpdatePeriodHandler
                 ]);
 
                 UserState::setState($userId, 'settings');
-
-                $message = "Настройки были обновлены:\n"
-                    . "Период сбора был обнавлён, теперь он осуществляется каждые {$settings->weeks_in_period} недели\n"
-                    . "Они вступят в силу после окончания текущего периода\n";
-
-                $this->sendMessageToAllChats($telegram, $message);
-
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,

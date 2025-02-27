@@ -44,11 +44,6 @@ class UpdateHashtagsSettingHandler
                     'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
                 ]);
                 UserState::setState($userId, 'updateHashtags');
-
-                $message = "Настройки были обновлены:\n"
-                    . "Хэштег {$hashtagToDetach} был отвязан\n";
-
-                $this->sendMessageToAllChats($telegram, $message);
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,

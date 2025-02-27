@@ -37,12 +37,6 @@ class UpdateTimeHandler
                 ]);
 
                 UserState::setState($userId, 'settings');
-
-                $message = "Настройки были обновлены:\n"
-                    . "Время сбора был обнавлён: {$settings->report_time}\n"
-                    . "Они вступят в силу после окончания текущего периода\n";
-
-                $this->sendMessageToAllChats($telegram, $message);
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,

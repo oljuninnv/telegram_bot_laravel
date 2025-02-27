@@ -62,7 +62,8 @@ class ChatEventHandler
 
     private function handleNewChat(Api $telegram, $chatMember, int $chatId)
     {
-        Chat::create(['name' => $chatMember->chat->title, 'chat_id' => $chatId]);
+        $chatLink = $chatMember?->chat?->username?'t.me/'. $chatMember?->chat?->username:'';
+        Chat::create(['name' => $chatMember->chat->title, 'chat_id' => $chatId,'chat_link' => $chatLink]);
 
         $hashtags = Hashtag::whereIn('id', function ($query) {
             $query->select('hashtag_id')->from('setting_hashtags');
