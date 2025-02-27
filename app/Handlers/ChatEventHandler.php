@@ -132,8 +132,8 @@ class ChatEventHandler
 
         // Преобразуем строку в объект Carbon, если это необходимо
         $endDate = $settings
-            ? Carbon::parse($settings->current_period_end_date) // Преобразуем строку в Carbon
-            : Carbon::now()->endOfWeek()->setTimeFromTimeString($reportTime)->subHour();
+            ? Carbon::parse($settings->current_period_end_date)
+            : Carbon::now()->endOfWeek()->setTimeFromTimeString($reportTime)->subSecond();
 
         $startDate = $settings
             ? Carbon::parse($endDate)->subWeeks($settings->weeks_in_period)->setTimeFromTimeString($reportTime)
