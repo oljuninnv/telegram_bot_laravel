@@ -28,6 +28,16 @@ class SettingState
         return Cache::get(self::STATE_KEY_PREFIX . $userId . '_day');
     }
 
+    public static function setWeeksInPeriod(int $userId, int $weeksInPeriod): void
+    {
+        Cache::set(self::STATE_KEY_PREFIX . $userId . '_weeks', $weeksInPeriod);
+    }
+
+    public static function getWeeksInPeriod(int $userId): ?int
+    {
+        return Cache::get(self::STATE_KEY_PREFIX . $userId . '_weeks');
+    }
+
     public static function setReportTime(int $userId, string $time): void
     {
         Cache::set(self::STATE_KEY_PREFIX . $userId . '_time', $time);
@@ -42,6 +52,7 @@ class SettingState
     {
         Cache::forget(self::STATE_KEY_PREFIX . $userId . '_step');
         Cache::forget(self::STATE_KEY_PREFIX . $userId . '_day');
+        Cache::forget(self::STATE_KEY_PREFIX . $userId . '_weeks');
         Cache::forget(self::STATE_KEY_PREFIX . $userId . '_time');
     }
 }

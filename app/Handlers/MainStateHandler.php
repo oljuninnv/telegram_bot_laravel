@@ -108,14 +108,14 @@ class MainStateHandler
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => "Текущие настройки:\n"
+                    . "Дата окончания текущего сбора: {$set->current_period_end_date}\n"
                     . "День недели: {$set->report_day}\n"
                     . "Время: {$set->report_time}\n"
-                    . "Период сбора: {$set->weeks_in_period}\n\n"
+                    . "Период сбора: {$set->weeks_in_period}\n"
                     . "Все хэштеги в базе данных:\n"
-                    . $this->getAllHashtags() . "\n\n"
+                    . $this->getAllHashtags() . "\n"
                     . "Подключённые хэштеги:\n"
-                    . $this->getAttachedHashtags($set) . "\n\n"
-                    . "Что вы хотите обновить?",
+                    . $this->getAttachedHashtags($set) . "\n",
                 'reply_markup' => Keyboards::updateSettingsKeyboard(),
             ]);
         }

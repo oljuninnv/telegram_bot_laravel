@@ -6,57 +6,83 @@ use Telegram\Bot\Api;
 use App\Models\Setting;
 use App\Services\UserState;
 use App\Enums\DayOfWeekEnums;
-use App\Helpers\HashtagHelper;
-use App\Helpers\MessageHelper;
+use App\Services\SettingState;
+use App\Keyboards;
 
 class UpdateDayOfWeekHandler
 {
-    use HashtagHelper, MessageHelper;
-
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
         $settings = Setting::latest()->first();
         $update = $telegram->getWebhookUpdate();
 
         if ($update->callback_query) {
-            $callbackData = $update->callback_query->data;
-            $messageText = $callbackData;
+            $messageText = $update->callback_query->data;
             $chatId = $update->callback_query->message->chat->id;
         }
 
-        if ($settings) {
-            if (DayOfWeekEnums::tryFrom($messageText)) {
-                $settings->update(['report_day' => $messageText]);
+        if ($messageText === 'Оставить текущее') {
+            if ($settings) {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => 'День недели успешно обновлён!',
+                    'text' => 'День недели остался текущим.',
                 ]);
-
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => "Текущие настройки:\n"
-                        . "День недели: {$settings->report_day}\n"
-                        . "Время: {$settings->report_time}\n"
-                        . "Период сбора: {$settings->weeks_in_period}\n\n"
-                        . "Все хэштеги в базе данных:\n"
-                        . $this->getAllHashtags() . "\n\n"
-                        . "Подключённые хэштеги:\n"
-                        . $this->getAttachedHashtags($settings) . "\n\n"
-                        . "Что вы хотите обновить?",
-                ]);
-
-                UserState::setState($userId, 'settings');
+                SettingState::setDayOfWeek($userId, $settings->report_day);
+                $this->promptForWeeksInPeriod($telegram, $chatId, $userId);
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => 'Пожалуйста, выберите корректный день недели.',
+                    'text' => 'Настройки не были найдены.',
                 ]);
+            }
+        } elseif (DayOfWeekEnums::tryFrom($messageText)) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'День недели добавлен.',
+            ]);
+            SettingState::setDayOfWeek($userId, $messageText);
+            $this->promptForWeeksInPeriod($telegram, $chatId, $userId);
+        } elseif ($messageText === 'Назад') {
+            if ($settings) {
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => 'Вы вернулись в меню настроек',
+                    'reply_markup' => Keyboards::updateSettingsKeyboard(),
+                ]);
+                UserState::setState($userId, 'settings');
+                SettingState::clearAll($userId);
+            } else {
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => 'Вы вернулись в меню настроек',
+                    'reply_markup' => Keyboards::settingsAdminKeyboard(),
+                ]);
+                UserState::setState($userId, 'settings');
+                SettingState::clearAll($userId);
             }
         } else {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => 'Настройки отсутствуют. Пожалуйста, создайте новую настройку.',
+                'text' => 'Пожалуйста, выберите корректный день недели.',
             ]);
         }
+    }
+
+    private function promptForWeeksInPeriod(Api $telegram, int $chatId, int $userId)
+    {
+        $settingsExist = Setting::exists();
+
+        $replyMarkup = null;
+        if ($settingsExist) {
+            $replyMarkup = Keyboards::LeaveTheCurrentKeyboard();
+        }
+
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "Введите количество недель в периоде сбора (от 1 до 10):",
+            'reply_markup' => $replyMarkup,
+        ]);
+
+        UserState::setState($userId, 'updatePeriod');
     }
 }

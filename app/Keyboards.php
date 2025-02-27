@@ -32,7 +32,7 @@ class Keyboards
                 Keyboard::button('Настроить сбор отчётов'),
             ])
             ->row([
-                Keyboard::button('Назад'),
+                Keyboard::button(['text' => 'Назад', 'callback_data' => 'Назад']),
             ]);
     }
 
@@ -40,11 +40,7 @@ class Keyboards
     {
         return Keyboard::make()
             ->row([
-                Keyboard::button(['text' => 'Обновить период', 'callback_data' => 'Обновить период']),
-                Keyboard::button(['text' => 'Обновить время', 'callback_data' => 'Обновить время']),
-            ])
-            ->row([
-                Keyboard::button(['text' => 'Обновить день недели', 'callback_data' => 'Обновить день недели']),
+                Keyboard::button(['text' => 'Настроить сбор отчётов', 'callback_data' => 'Настроить сбор отчётов']),
                 Keyboard::button(['text' => 'Обновить хэштеги', 'callback_data' => 'Обновить хэштеги']),
             ])
             ->row([
@@ -74,24 +70,43 @@ class Keyboards
             ->setResizeKeyboard(true)
             ->setOneTimeKeyboard(true)
             ->row([
-                Keyboard::button('Назад'),
+                Keyboard::button(['text' => 'Назад', 'callback_data' => 'Назад']),
             ]);
     }
 
-    public static function getDaysOfWeekKeyboard()
+    public static function getDaysOfWeekKeyboard(bool $settingsExist = true)
     {
-        return Keyboard::make()
-            ->inline()
-            ->row([
-                Keyboard::inlineButton(['text' => 'Понедельник', 'callback_data' => 'понедельник']),
-                Keyboard::inlineButton(['text' => 'Вторник', 'callback_data' => 'вторник']),
-                Keyboard::inlineButton(['text' => 'Среда', 'callback_data' => 'среда']),
-            ])
-            ->row([
-                Keyboard::inlineButton(['text' => 'Четверг', 'callback_data' => 'четверг']),
-                Keyboard::inlineButton(['text' => 'Пятница', 'callback_data' => 'пятница']),
-                Keyboard::inlineButton(['text' => 'Суббота', 'callback_data' => 'суббота']),
-                Keyboard::inlineButton(['text' => 'Воскресенье', 'callback_data' => 'воскресенье']),
+        $keyboard = Keyboard::make()->inline();
+
+        // Добавляем кнопку "Оставить текущее" только если настройки существуют
+        if ($settingsExist) {
+            $keyboard->row([
+                Keyboard::inlineButton(['text' => 'Оставить текущее', 'callback_data' => 'Оставить текущее']),
             ]);
+        }
+
+        $keyboard->row([
+            Keyboard::inlineButton(['text' => 'Понедельник', 'callback_data' => 'понедельник']),
+            Keyboard::inlineButton(['text' => 'Вторник', 'callback_data' => 'вторник']),
+            Keyboard::inlineButton(['text' => 'Среда', 'callback_data' => 'среда']),
+        ])->row([
+                    Keyboard::inlineButton(['text' => 'Четверг', 'callback_data' => 'четверг']),
+                    Keyboard::inlineButton(['text' => 'Пятница', 'callback_data' => 'пятница']),
+                    Keyboard::inlineButton(['text' => 'Суббота', 'callback_data' => 'суббота']),
+                    Keyboard::inlineButton(['text' => 'Воскресенье', 'callback_data' => 'воскресенье']),
+                ]);
+
+        return $keyboard;
+    }
+
+    public static function LeaveTheCurrentKeyboard()
+    {
+        $keyboard = Keyboard::make()->inline();
+
+        $keyboard->row([
+            Keyboard::inlineButton(['text' => 'Оставить текущее', 'callback_data' => 'Оставить текущее']),
+        ]);
+
+        return $keyboard;
     }
 }
