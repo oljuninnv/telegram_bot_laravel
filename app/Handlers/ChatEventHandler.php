@@ -72,7 +72,7 @@ class ChatEventHandler
             return $hashtag;
         }, $hashtags));
 
-        $this->sendMessage($telegram, $chatId, 'Для отправки отчётов необходимо записывать хэштеги: ' . $hashtagsText . '. Пример записи: #хэштег {ссылка на google таблицу}');
+        $this->sendMessage($telegram, $chatId, 'Для отправки отчётов необходимо записывать хэштеги: ' . $hashtagsText . '. Пример записи: #хэштег {ссылка на google таблицу} или прикрепите файл с отчётом с подписью #хэштег');
     }
 
     private function handleHashtagMessage(Api $telegram, $update)
