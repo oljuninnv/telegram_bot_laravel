@@ -2,6 +2,7 @@
 
 namespace App\Handlers\UpdateHandlers;
 
+use App\Models\Hashtag;
 use Telegram\Bot\Api;
 use App\Models\Setting;
 use App\Services\UserState;
@@ -9,97 +10,83 @@ use App\Keyboards;
 use App\Handlers\UpdateHandlers\Hashtags\CreateHashtagHandler;
 use App\Handlers\UpdateHandlers\Hashtags\DeleteHashtagHandler;
 use App\Handlers\UpdateHandlers\Hashtags\AttachHashtagHandler;
-use App\Handlers\UpdateHandlers\Hashtags\UpdateHashtagsSettingHandler;
 
 class UpdateHashtagsHandler
 {
-    public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
         $settings = Setting::all()->last();
 
         if (!$settings) {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'У вас нет настроек. Сначала создайте настройку.',
-            ]);
+            $this->sendMessage($telegram, $chatId, 'У вас нет настроек. Сначала создайте настройку.');
             return;
         }
 
         switch ($messageText) {
             case 'Создать хэштег':
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => "Чтобы создать хэштег, введите хэштег и заголовок через запятую (например, #example, Пример).",
-                ]);
+                $this->sendMessage($telegram, $chatId, "Чтобы создать хэштег, введите хэштег и заголовок через запятую (например, #example, Пример).");
                 UserState::setState($userId, 'createHashtag');
                 break;
 
             case 'Удалить хэштег':
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => "Чтобы удалить хэштег, введите хэштег, который хотите удалить.",
-                ]);
+                $this->sendMessage($telegram, $chatId, "Чтобы удалить хэштег, введите хэштег, который хотите удалить.");
                 UserState::setState($userId, 'deleteHashtag');
                 break;
 
-            case 'Привязать хэштег':
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => "Чтобы привязать хэштег к настройке, введите хэштег, который хотите привязать.",
-                ]);
-                UserState::setState($userId, 'attachHashtag');
-                break;
-
-            case 'Отвязать хэштег':
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => "Чтобы отвязать хэштег из настроек, введите хэштег, который хотите отвязать.",
-                ]);
-                UserState::setState($userId, 'updateHashtagsSetting');
+            case 'Привязка хэштега':
+                $this->handleAttachHashtag($telegram, $chatId, $userId);
                 break;
 
             case 'Назад':
                 UserState::setState($userId, 'settings');
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => 'Вы вернулись в меню настроек',
-                    'reply_markup' => Keyboards::updateSettingsKeyboard(),
-                ]);
+                $this->sendMessage($telegram, $chatId, 'Вы вернулись в меню настроек', Keyboards::updateSettingsKeyboard());
                 break;
 
             default:
-                $currentState = UserState::getState($userId);
-
-                switch ($currentState) {
-                    case 'createHashtag':
-                        $handler = new CreateHashtagHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-
-                    case 'deleteHashtag':
-                        $handler = new DeleteHashtagHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-
-                    case 'attachHashtag':
-                        $handler = new AttachHashtagHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-
-                    case 'updateHashtagsSetting':
-                        $handler = new UpdateHashtagsSettingHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText);
-                        break;
-
-                    default:
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
-                            'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
-                        ]);
-                        break;
-                }
+                $this->handleDefault($telegram, $chatId, $userId, $messageText, $messageId);
                 break;
         }
+    }
+
+
+    private function handleAttachHashtag(Api $telegram, int $chatId, int $userId)
+    {
+        $hashtags = Hashtag::all();
+
+        if ($hashtags->isEmpty()) {
+            $this->sendMessage($telegram, $chatId, 'У вас нет хэштегов. Сначала создайте хэштег.');
+            return;
+        }
+
+        $this->sendMessage($telegram, $chatId, "Чтобы привязать хэштег к настройке, введите хэштег, который хотите привязать.", Keyboards::HashTagsInlineKeyboard($hashtags));
+        UserState::setState($userId, 'attachHashtag');
+    }
+
+    private function handleDefault(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId)
+    {
+        $currentState = UserState::getState($userId);
+
+        $handlers = [
+            'createHashtag' => CreateHashtagHandler::class,
+            'deleteHashtag' => DeleteHashtagHandler::class,
+            'attachHashtag' => AttachHashtagHandler::class,
+        ];
+
+        if (isset($handlers[$currentState])) {
+            $handler = new $handlers[$currentState]();
+            $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
+            return;
+        }
+
+        $this->sendMessage($telegram, $chatId, 'Неизвестная команда. Пожалуйста, выберите действие из меню.', Keyboards::hashtagSettingsKeyboard());
+    }
+
+    private function sendMessage(Api $telegram, int $chatId, string $text, $replyMarkup = null)
+    {
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => $text,
+            'reply_markup' => $replyMarkup,
+        ]);
     }
 }

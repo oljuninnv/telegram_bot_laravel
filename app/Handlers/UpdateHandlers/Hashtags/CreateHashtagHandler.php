@@ -9,7 +9,7 @@ use App\Keyboards;
 
 class CreateHashtagHandler
 {
-    public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
         $parts = explode(',', $messageText);
         if (count($parts) == 2) {

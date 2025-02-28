@@ -7,7 +7,6 @@ use App\Models\Chat;
 use App\Models\Hashtag;
 use App\Models\Setting;
 use App\Models\Setting_Hashtag;
-use Telegram\Bot\BotsManager;
 use Carbon\Carbon;
 use App\Services\ReportService;
 use App\Helpers\MessageHelper;
@@ -24,10 +23,8 @@ class ChatEventHandler
         $this->reportService = $reportService;
     }
 
-    public function handle(Api $telegram, $update, BotsManager $botsManager)
+    public function handle(Api $telegram, $update)
     {
-        $botsManager->bot()->commandsHandler(true);
-
         $chatMember = $update?->myChatMember;
         $status = $chatMember?->newChatMember?->status;
         $chatId = $chatMember?->chat?->id;

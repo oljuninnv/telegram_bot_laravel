@@ -3,6 +3,7 @@
 namespace App;
 
 use Telegram\Bot\Keyboard\Keyboard;
+use App\Models\Setting_Hashtag;
 
 class Keyboards
 {
@@ -48,18 +49,31 @@ class Keyboards
             ]);
     }
 
+    // public static function hashtagSettingsKeyboard()
+    // {
+    //     return Keyboard::make()
+    //         ->row([
+    //             Keyboard::button(['text' => 'Создать хэштег']),
+    //         ])
+    //         ->row([
+    //             Keyboard::button(['text' => 'Удалить хэштег']),
+    //             Keyboard::button(['text' => 'Привязать хэштег']),
+    //         ])
+    //         ->row([
+    //             Keyboard::button(['text' => 'Отвязать хэштег']),
+    //             Keyboard::button(['text' => 'Назад']),
+    //         ]);
+    // }
+
     public static function hashtagSettingsKeyboard()
     {
         return Keyboard::make()
             ->row([
                 Keyboard::button(['text' => 'Создать хэштег']),
-            ])
-            ->row([
                 Keyboard::button(['text' => 'Удалить хэштег']),
-                Keyboard::button(['text' => 'Привязать хэштег']),
+                Keyboard::button(['text' => 'Привязка хэштега']),
             ])
             ->row([
-                Keyboard::button(['text' => 'Отвязать хэштег']),
                 Keyboard::button(['text' => 'Назад']),
             ]);
     }
@@ -105,6 +119,54 @@ class Keyboards
 
         $keyboard->row([
             Keyboard::inlineButton(['text' => 'Оставить текущее', 'callback_data' => 'Оставить текущее']),
+        ]);
+
+        return $keyboard;
+    }
+
+    public static function HashTagsInlineKeyboard($hashtags, $currentPage = 1, $itemsPerPage = 5)
+    {
+        $keyboard = Keyboard::make()->inline();
+
+        $totalHashtags = count($hashtags);
+        $totalPages = ceil($totalHashtags / $itemsPerPage);
+
+        $startIndex = ($currentPage - 1) * $itemsPerPage;
+        $endIndex = min($startIndex + $itemsPerPage, $totalHashtags);
+
+        // Добавляем хэштеги на текущей странице
+        for ($i = $startIndex; $i < $endIndex; $i++) {
+            $hashtag = $hashtags[$i];
+            $isAttached = Setting_Hashtag::where('hashtag_id', $hashtag->id)->exists();
+
+            if ($isAttached) {
+                $keyboard->row([
+                    Keyboard::inlineButton(['text' => 'Отвязать хэштег: ' . $hashtag->hashtag, 'callback_data' => 'detach_' . $hashtag->id]),
+                ]);
+            } else {
+                $keyboard->row([
+                    Keyboard::inlineButton(['text' => 'Привязать хэштег: ' . $hashtag->hashtag, 'callback_data' => 'attach_' . $hashtag->id]),
+                ]);
+            }
+        }
+
+        $row = [];
+
+        if ($currentPage > 1) {
+            $row[] = Keyboard::inlineButton(['text' => 'Назад', 'callback_data' => 'page_' . ($currentPage - 1)]);
+        }
+
+        // Кнопка счётчика (неактивная)
+        $row[] = Keyboard::inlineButton(['text' => "Страница {$currentPage} из {$totalPages}", 'callback_data' => 'ignore']);
+
+        if ($currentPage < $totalPages) {
+            $row[] = Keyboard::inlineButton(['text' => 'Вперед', 'callback_data' => 'page_' . ($currentPage + 1)]);
+        }
+
+        $keyboard->row($row);
+
+        $keyboard->row([
+            Keyboard::inlineButton(['text' => 'Закончить настройку', 'callback_data' => 'back_to_settings']),
         ]);
 
         return $keyboard;

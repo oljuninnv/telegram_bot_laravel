@@ -7,7 +7,6 @@ use Telegram\Bot\Api;
 use App\Services\UserState;
 use App\Handlers\MainStateHandler;
 use App\Handlers\SettingsStateHandler;
-use App\Handlers\CreateSettingHandler;
 use App\Handlers\ChatEventHandler;
 use Telegram\Bot\BotsManager;
 use App\Handlers\UpdateHandlers\UpdatePeriodHandler;
@@ -17,7 +16,6 @@ use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
 use App\Handlers\UpdateHandlers\Hashtags\AttachHashtagHandler;
 use App\Handlers\UpdateHandlers\Hashtags\CreateHashtagHandler;
 use App\Handlers\UpdateHandlers\Hashtags\DeleteHashtagHandler;
-use App\Handlers\UpdateHandlers\Hashtags\UpdateHashtagsSettingHandler;
 
 class MessageController extends Controller
 {
@@ -37,7 +35,7 @@ class MessageController extends Controller
 
         // Обработка событий чата (добавление/удаление бота)
         if ($update?->myChatMember?->chat?->type && $update?->myChatMember?->chat?->type != 'private') {
-            $chatResponse = $this->chatEventHandler->handle($telegram, $update, $this->botsManager);
+            $chatResponse = $this->chatEventHandler->handle($telegram, $update );
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
 
@@ -51,10 +49,11 @@ class MessageController extends Controller
         $userId = $update->callback_query ? $update->callback_query->from->id : $update?->message?->from?->id;
         $messageText = $update->callback_query ? $update->callback_query->data : $update?->message?->text;
         $chatType = $update?->message?->chat?->type ?? $update->callback_query->message->chat->type;
+        $messageId = $update?->message?->message_id ?? $update->callback_query->message->message_id;
 
         // Если это не приватный чат, обрабатываем через ChatEventHandler
         if ($chatType !== 'private') {
-            $chatResponse = $this->chatEventHandler->handle($telegram, $update, $this->botsManager);
+            $chatResponse = $this->chatEventHandler->handle($telegram, $update);
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
 
@@ -63,18 +62,29 @@ class MessageController extends Controller
             return response(null, 200);
         }
 
-        // Обработка команд в зависимости от состояния пользователя
-        $this->handleUserState($telegram, $chatId, $userId, $messageText);
+        $this->botsManager->bot()->commandsHandler(true);
+        $isBotCommand = false;
 
+        if (!empty($update->message->entities)) {
+            foreach ($update->message->entities as $entity) {
+                if ($entity->type === 'bot_command') {
+                    $isBotCommand = true;
+                    break;
+                }
+            }
+        }
+        else{
+            $this->handleUserState($telegram, $chatId, $userId, $messageText, $messageId);
+        }
+        
         return response(null, 200);
     }
 
-    private function handleUserState(Api $telegram, int $chatId, int $userId, string $messageText)
+    private function handleUserState(Api $telegram, int $chatId, int $userId, string $messageText, int $messageId)
     {
         $handlers = [
             'main' => MainStateHandler::class,
             'settings' => SettingsStateHandler::class,
-            'createSettings' => CreateSettingHandler::class,
             'updatePeriod' => UpdatePeriodHandler::class,
             'updateDayOfWeek' => UpdateDayOfWeekHandler::class,
             'updateHashtags' => UpdateHashtagsHandler::class,
@@ -82,13 +92,12 @@ class MessageController extends Controller
             'createHashtag' => CreateHashtagHandler::class,
             'deleteHashtag' => DeleteHashtagHandler::class,
             'attachHashtag' => AttachHashtagHandler::class,
-            'updateHashtagsSetting' => UpdateHashtagsSettingHandler::class,
         ];
 
         $currentState = UserState::getState($userId);
         if (isset($handlers[$currentState])) {
             $handler = new $handlers[$currentState]();
-            $handler->handle($telegram, $chatId, $userId, $messageText, $this->botsManager);
+            $handler->handle($telegram, $chatId, $userId, $messageText, $messageId); // Передаём $messageId, а не $this->botsManager
         }
 
         return response(null, 200);

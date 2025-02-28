@@ -14,7 +14,7 @@ use App\Enums\DayOfWeekEnums;
 class UpdateTimeHandler
 {
     use HashtagHelper;
-    public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
         $settings = Setting::latest()->first();
 

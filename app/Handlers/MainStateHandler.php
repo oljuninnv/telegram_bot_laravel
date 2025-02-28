@@ -6,7 +6,6 @@ use Telegram\Bot\Api;
 use App\Keyboards;
 use App\Services\UserState;
 use App\Models\Chat;
-use Telegram\Bot\BotsManager;
 use App\Models\Setting;
 use App\Models\Hashtag;
 use App\Helpers\HashtagHelper;
@@ -17,47 +16,33 @@ class MainStateHandler
 {
     use HashtagHelper;
 
-    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, BotsManager $botsManager)
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
-        $update = $telegram->getWebhookUpdate();
-        $botsManager->bot()->commandsHandler(true);
-        $isBotCommand = false;
+      switch ($messageText) {
+            case 'Получить список чатов':
+                $this->handleGetChatsList($telegram, $chatId);
+                break;
 
-        if (!empty($update->message->entities)) {
-            foreach ($update->message->entities as $entity) {
-                if ($entity->type === 'bot_command') {
-                    $isBotCommand = true;
-                    break;
-                }
-            }
-        }
+            case 'Настройка сбора отчетов':
+                $this->handleReportSettings($telegram, $chatId, $userId);
+                break;
 
-        if (!$isBotCommand) {
-            switch ($messageText) {
-                case 'Получить список чатов':
-                    $this->handleGetChatsList($telegram, $chatId);
-                    break;
+            case 'Проверить отчеты':
+                $this->handleCheckReports($telegram, $chatId);
+                break;
 
-                case 'Настройка сбора отчетов':
-                    $this->handleReportSettings($telegram, $chatId, $userId);
-                    break;
+            case 'Помощь':
+                $this->handleHelp($telegram, $chatId);
+                break;
 
-                case 'Проверить отчеты':
-                    $this->handleCheckReports($telegram, $chatId);
-                    break;
+            default:
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
+                    'reply_markup' => Keyboards::mainAdminKeyboard(),
+                ]);
+                break;
 
-                case 'Помощь':
-                    $this->handleHelp($telegram, $chatId);
-                    break;
-
-                default:
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
-                        'reply_markup' => Keyboards::mainAdminKeyboard(),
-                    ]);
-                    break;
-            }
         }
     }
 

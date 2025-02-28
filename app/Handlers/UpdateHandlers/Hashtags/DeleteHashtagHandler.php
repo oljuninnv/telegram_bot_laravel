@@ -10,7 +10,7 @@ use App\Services\UserState;
 
 class DeleteHashtagHandler
 {
-    public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
         $hashtag = trim($messageText);
         $hashtagModel = Hashtag::where('hashtag', $hashtag)->first();

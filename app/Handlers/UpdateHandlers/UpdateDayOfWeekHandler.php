@@ -11,7 +11,7 @@ use App\Keyboards;
 
 class UpdateDayOfWeekHandler
 {
-    public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
         $settings = Setting::latest()->first();
         $update = $telegram->getWebhookUpdate();
@@ -79,7 +79,7 @@ class UpdateDayOfWeekHandler
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "Введите количество недель в периоде сбора (от 1 до 10):",
+            'text' => "Введите через сколько недель будет период сбора (от 1 до 10):",
             'reply_markup' => $replyMarkup,
         ]);
 
