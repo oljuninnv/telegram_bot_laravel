@@ -171,4 +171,43 @@ class Keyboards
 
         return $keyboard;
     }
+
+    public static function DeleteHashTagsInlineKeyboard($hashtags, $currentPage = 1, $itemsPerPage = 2)
+    {
+        $keyboard = Keyboard::make()->inline();
+
+        $totalHashtags = count($hashtags);
+        $totalPages = ceil($totalHashtags / $itemsPerPage);
+
+        $startIndex = ($currentPage - 1) * $itemsPerPage;
+        $endIndex = min($startIndex + $itemsPerPage, $totalHashtags);
+
+        for ($i = $startIndex; $i < $endIndex; $i++) {
+            $hashtag = $hashtags[$i];
+
+            $keyboard->row([
+                Keyboard::inlineButton(['text' => $hashtag->hashtag, 'callback_data' => 'delete_' . $hashtag->id]),
+            ]);
+        }
+
+        $row = [];
+
+        if ($currentPage > 1) {
+            $row[] = Keyboard::inlineButton(['text' => 'Назад', 'callback_data' => 'page_' . ($currentPage - 1)]);
+        }
+
+        $row[] = Keyboard::inlineButton(['text' => "Страница {$currentPage} из {$totalPages}", 'callback_data' => 'ignore']);
+
+        if ($currentPage < $totalPages) {
+            $row[] = Keyboard::inlineButton(['text' => 'Вперед', 'callback_data' => 'page_' . ($currentPage + 1)]);
+        }
+
+        $keyboard->row($row);
+
+        $keyboard->row([
+            Keyboard::inlineButton(['text' => 'Закончить', 'callback_data' => 'back_to_settings']),
+        ]);
+
+        return $keyboard;
+    }
 }

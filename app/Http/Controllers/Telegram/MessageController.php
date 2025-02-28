@@ -34,7 +34,7 @@ class MessageController extends Controller
         $update = $telegram->getWebhookUpdate();
 
         if ($update?->myChatMember?->chat?->type && $update?->myChatMember?->chat?->type != 'private') {
-            $chatResponse = $this->chatEventHandler->handle($telegram, $update );
+            $chatResponse = $this->chatEventHandler->handle($telegram, $update);
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
 
@@ -59,17 +59,22 @@ class MessageController extends Controller
 
         $this->botsManager->bot()->commandsHandler(true);
 
+        // Проверяем, есть ли команда в сообщении
+        $hasCommand = false;
         if (!empty($update->message->entities)) {
             foreach ($update->message->entities as $entity) {
                 if ($entity->type === 'bot_command') {
-                    break;
+                    $hasCommand = true;
+                    break; // Прерываем цикл, если найдена команда
                 }
             }
         }
-        else{
+
+        // Если команда не найдена, вызываем handleUserState
+        if (!$hasCommand) {
             $this->handleUserState($telegram, $chatId, $userId, $messageText, $messageId);
         }
-        
+
         return response(null, 200);
     }
 

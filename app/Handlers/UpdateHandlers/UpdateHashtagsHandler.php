@@ -48,13 +48,27 @@ class UpdateHashtagsHandler
 
     private function handleCreateHashtag(Api $telegram, int $chatId, int $userId)
     {
-        $this->sendMessage($telegram, $chatId, "Чтобы создать хэштег, введите хэштег и заголовок через запятую (например, #example, Пример).");
+        $this->sendMessage($telegram, $chatId, "Чтобы создать хэштег, введите хэштег и заголовок через запятую (например, #example, Пример).",Keyboards::backAdminKeyboard());
         UserState::setState($userId, 'createHashtag');
     }
 
     private function handleDeleteHashtag(Api $telegram, int $chatId, int $userId)
     {
-        $this->sendMessage($telegram, $chatId, "Чтобы удалить хэштег, введите хэштег, который хотите удалить.");
+        $hashtags = Hashtag::all();
+
+        if ($hashtags->isEmpty()) {
+            $this->sendMessage($telegram, $chatId, 'У вас нет хэштегов. Сначала создайте хэштег.');
+            return;
+        }
+
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "Выберите хэштег для удаления:",
+            'reply_markup' => json_encode(['remove_keyboard' => true]),
+        ]);
+
+        // Отправляем клавиатуру с хэштегами
+        $this->sendMessage($telegram, $chatId, "Выберите хэштег для удаления:", Keyboards::DeleteHashTagsInlineKeyboard($hashtags));
         UserState::setState($userId, 'deleteHashtag');
     }
 
@@ -81,7 +95,6 @@ class UpdateHashtagsHandler
 
     private function handleDefault(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId)
     {
-        \Log::info('dsvfd');
         $currentState = UserState::getState($userId);
 
         $handlers = [

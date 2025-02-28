@@ -7,29 +7,88 @@ use App\Models\Hashtag;
 use App\Models\Setting_Hashtag;
 use App\Keyboards;
 use App\Services\UserState;
+use App\Helpers\MessageHelper;
 
 class DeleteHashtagHandler
 {
-    public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
+    use MessageHelper;
+
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
-        $hashtag = trim($messageText);
-        $hashtagModel = Hashtag::where('hashtag', $hashtag)->first();
-        \Log::info($hashtagModel);
-        if ($hashtagModel) {
+        if ($messageText === 'back_to_settings') {
+            UserState::setState($userId, 'updateHashtags');
+            $this->deleteMessage($telegram, $chatId, $messageId);
+            $this->sendMessage($telegram, $chatId, 'Вы вернулись в меню настроек хэштегов', Keyboards::hashtagSettingsKeyboard());
+            return;
+        }
+
+        if ($messageText === 'ignore') {
+            return;
+        }
+
+        if (strpos($messageText, 'page_') === 0) {
+            $page = (int) str_replace('page_', '', $messageText);
+            $hashtags = Hashtag::all();
+
+            $this->deleteMessage($telegram, $chatId, $messageId);
+            $this->sendMessage($telegram, $chatId, 'Выберите хэштег для удаления:', Keyboards::DeleteHashTagsInlineKeyboard($hashtags, $page));
+            return;
+        }
+
+        if (strpos($messageText, 'delete_') === 0) {
+            $hashtagId = (int) str_replace('delete_', '', $messageText);
+            $hashtagModel = Hashtag::find($hashtagId);
+
+            if (!$hashtagModel) {
+                $this->sendMessage($telegram, $chatId, 'Хэштег не найден.');
+                return;
+            }
+
+            // Удаляем хэштег
             Setting_Hashtag::where('hashtag_id', $hashtagModel->id)->delete();
             $hashtagModel->delete();
 
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Хэштег успешно удалён!',
-                'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
-            ]);
-            UserState::setState($userId, 'updateHashtags');
+            // Удаляем сообщение с предыдущей клавиатурой
+            $this->deleteMessage($telegram, $chatId, $messageId);
+
+            // Получаем обновлённый список хэштегов
+            $hashtags = Hashtag::all();
+
+            if ($hashtags->isEmpty()) {
+                // Если хэштегов больше нет, выходим из режима удаления
+                $this->sendMessage($telegram, $chatId, 'Все хэштеги удалены. Вы вернулись в меню настроек хэштегов.', Keyboards::hashtagSettingsKeyboard());
+                UserState::setState($userId, 'updateHashtags');
+                return;
+            }
+
+            // Показываем обновлённую клавиатуру с оставшимися хэштегами
+            $this->sendMessage($telegram, $chatId, 'Хэштег успешно удалён! Выберите следующий хэштег для удаления:', Keyboards::DeleteHashTagsInlineKeyboard($hashtags));
+            return;
         } else {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => 'Хэштег не найден.',
+                'text' => 'Данный текст не является хэштегом. Если хотите выйти из настройки, нажмите кнопку "Закончить настройку"',
+            ]);
+            return;
+        }
+    }
+
+    private function deleteMessage(Api $telegram, int $chatId, ?int $messageId)
+    {
+        if ($messageId) {
+            $telegram->deleteMessage([
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
             ]);
         }
+    }
+
+    private function sendMessage(Api $telegram, int $chatId, string $text, $replyMarkup = null)
+    {
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => $text,
+            'reply_markup' => $replyMarkup,
+        ]);
     }
 }
