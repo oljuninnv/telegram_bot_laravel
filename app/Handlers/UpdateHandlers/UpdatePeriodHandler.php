@@ -72,7 +72,7 @@ class UpdatePeriodHandler
         $telegram->sendMessage([
             'chat_id' => $chatId,
             'text' => "Введите корректное время (например, 14:00):",
-            'reply_markup' => $replyMarkup ,
+            'reply_markup' => $replyMarkup,
         ]);
         UserState::setState($userId, 'updateTime');
     }

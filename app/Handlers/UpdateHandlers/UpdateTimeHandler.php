@@ -19,21 +19,20 @@ class UpdateTimeHandler
         $settings = Setting::latest()->first();
 
         if ($messageText === 'Оставить текущее') {
-            if($settings){
+            if ($settings) {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text' => 'Время осталось без изменений.',
                 ]);
                 SettingState::setReportTime($userId, $settings->report_time);
                 $this->updateSettingsAndShowSummary($telegram, $chatId, $userId, $settings);
-            }
-            else{
+            } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text' => 'Настройки не найдены.',
                 ]);
             }
-            
+
         } elseif (preg_match('/^(2[0-3]|[01]?[0-9]):([0-5][0-9])$/', $messageText)) {
             $telegram->sendMessage([
                 'chat_id' => $chatId,

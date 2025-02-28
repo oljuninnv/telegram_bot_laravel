@@ -51,17 +51,17 @@ class AttachHashtagHandler
                     'setting_id' => $settings->id,
                     'hashtag_id' => $hashtagModel->id,
                 ]);
-                $responseText = 'Хэштег успешно привязан к настройке!';
-            } else {
+                $responseText = "Хэштег успешно привязан к настройке!";
+                
+            } else {                
                 $settingHashtag = Setting_Hashtag::where('setting_id', $settings->id)
                     ->where('hashtag_id', $hashtagModel->id)
                     ->first();
-
+                \Log::info($settingHashtag);
                 if ($settingHashtag) {
-                    $settingHashtag->delete();
-                    return "Хэштег {$hashtagModel->hashtag} успешно отвязан от настройки!";
+                    $responseText = "Хэштег {$settingHashtag->hashtag->hashtag} успешно отвязан!";
+                    $settingHashtag->delete();                    
                 }
-                return 'Хэштег не был привязан.';
             }
 
             $this->deleteMessage($telegram, $chatId, $messageId);

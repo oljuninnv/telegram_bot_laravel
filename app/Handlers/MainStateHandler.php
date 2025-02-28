@@ -108,11 +108,6 @@ class MainStateHandler
 
     private function handleCheckReports(Api $telegram, int $chatId)
     {
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => 'Вы выбрали проверку отчетов. Начинаю проверку...',
-        ]);
-
         $chats = Chat::all();
         if ($chats->isEmpty()) {
             $telegram->sendMessage([

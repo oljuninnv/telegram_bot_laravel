@@ -24,13 +24,11 @@ class UpdateHashtagsHandler
 
         switch ($messageText) {
             case 'Создать хэштег':
-                $this->sendMessage($telegram, $chatId, "Чтобы создать хэштег, введите хэштег и заголовок через запятую (например, #example, Пример).");
-                UserState::setState($userId, 'createHashtag');
+                $this->handleCreateHashtag($telegram, $chatId, $userId);
                 break;
 
             case 'Удалить хэштег':
-                $this->sendMessage($telegram, $chatId, "Чтобы удалить хэштег, введите хэштег, который хотите удалить.");
-                UserState::setState($userId, 'deleteHashtag');
+                $this->handleDeleteHashtag($telegram, $chatId, $userId);
                 break;
 
             case 'Привязка хэштега':
@@ -48,6 +46,17 @@ class UpdateHashtagsHandler
         }
     }
 
+    private function handleCreateHashtag(Api $telegram, int $chatId, int $userId)
+    {
+        $this->sendMessage($telegram, $chatId, "Чтобы создать хэштег, введите хэштег и заголовок через запятую (например, #example, Пример).");
+        UserState::setState($userId, 'createHashtag');
+    }
+
+    private function handleDeleteHashtag(Api $telegram, int $chatId, int $userId)
+    {
+        $this->sendMessage($telegram, $chatId, "Чтобы удалить хэштег, введите хэштег, который хотите удалить.");
+        UserState::setState($userId, 'deleteHashtag');
+    }
 
     private function handleAttachHashtag(Api $telegram, int $chatId, int $userId)
     {
@@ -58,12 +67,21 @@ class UpdateHashtagsHandler
             return;
         }
 
-        $this->sendMessage($telegram, $chatId, "Чтобы привязать хэштег к настройке, введите хэштег, который хотите привязать.", Keyboards::HashTagsInlineKeyboard($hashtags));
+        // Удаляем текущую клавиатуру, отправляя пустой reply_markup
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "Чтобы привязать хэштег к настройке, введите хэштег, который хотите привязать.",
+            'reply_markup' => json_encode(['remove_keyboard' => true]), // Удаляем клавиатуру
+        ]);
+
+        // Отправляем клавиатуру с хэштегами
+        $this->sendMessage($telegram, $chatId, "Выберите хэштег для привязки:", Keyboards::HashTagsInlineKeyboard($hashtags));
         UserState::setState($userId, 'attachHashtag');
     }
 
     private function handleDefault(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId)
     {
+        \Log::info('dsvfd');
         $currentState = UserState::getState($userId);
 
         $handlers = [

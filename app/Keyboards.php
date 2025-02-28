@@ -124,7 +124,7 @@ class Keyboards
         return $keyboard;
     }
 
-    public static function HashTagsInlineKeyboard($hashtags, $currentPage = 1, $itemsPerPage = 5)
+    public static function HashTagsInlineKeyboard($hashtags, $currentPage = 1, $itemsPerPage = 2)
     {
         $keyboard = Keyboard::make()->inline();
 

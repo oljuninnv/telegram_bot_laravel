@@ -9,10 +9,12 @@ use App\Keyboards;
 
 class CreateHashtagHandler
 {
-    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
+        \Log::info('dsvds');
         $parts = explode(',', $messageText);
         if (count($parts) == 2) {
+            
             $hashtag = trim($parts[0]);
             $reportTitle = trim($parts[1]);
 

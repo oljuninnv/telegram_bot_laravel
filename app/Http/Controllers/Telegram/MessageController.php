@@ -33,42 +33,35 @@ class MessageController extends Controller
         $telegram = new Api(config('telegram.bot_token'));
         $update = $telegram->getWebhookUpdate();
 
-        // Обработка событий чата (добавление/удаление бота)
         if ($update?->myChatMember?->chat?->type && $update?->myChatMember?->chat?->type != 'private') {
             $chatResponse = $this->chatEventHandler->handle($telegram, $update );
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
 
-        // Если это не сообщение и не callback_query, завершаем обработку
         if (!$update->message && !$update->callback_query) {
             return response(null, 200);
         }
 
-        // Получаем данные из обновления
         $chatId = $update->callback_query ? $update->callback_query->message->chat->id : $update?->message?->chat?->id;
         $userId = $update->callback_query ? $update->callback_query->from->id : $update?->message?->from?->id;
         $messageText = $update->callback_query ? $update->callback_query->data : $update?->message?->text;
         $chatType = $update?->message?->chat?->type ?? $update->callback_query->message->chat->type;
         $messageId = $update?->message?->message_id ?? $update->callback_query->message->message_id;
 
-        // Если это не приватный чат, обрабатываем через ChatEventHandler
         if ($chatType !== 'private') {
             $chatResponse = $this->chatEventHandler->handle($telegram, $update);
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
 
-        // Если это не администратор, завершаем обработку
         if ($chatId != env('TELEGRAM_USER_ADMIN_ID')) {
             return response(null, 200);
         }
 
         $this->botsManager->bot()->commandsHandler(true);
-        $isBotCommand = false;
 
         if (!empty($update->message->entities)) {
             foreach ($update->message->entities as $entity) {
                 if ($entity->type === 'bot_command') {
-                    $isBotCommand = true;
                     break;
                 }
             }
