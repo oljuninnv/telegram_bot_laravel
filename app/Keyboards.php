@@ -4,6 +4,8 @@ namespace App;
 
 use Telegram\Bot\Keyboard\Keyboard;
 use App\Models\Setting_Hashtag;
+use App\Models\TelegramUser;
+use App\Enums\RoleEnum;
 
 class Keyboards
 {
@@ -77,7 +79,6 @@ class Keyboards
     {
         $keyboard = Keyboard::make()->inline();
 
-        // Добавляем кнопку "Оставить текущее" только если настройки существуют
         if ($settingsExist) {
             $keyboard->row([
                 Keyboard::inlineButton(['text' => 'Оставить текущее', 'callback_data' => 'Оставить текущее']),
@@ -191,6 +192,168 @@ class Keyboards
 
         $keyboard->row([
             Keyboard::inlineButton(['text' => 'Закончить', 'callback_data' => 'back_to_settings']),
+        ]);
+
+        return $keyboard;
+    }
+
+    public static function userSettingsKeyboard()
+    {
+        return Keyboard::make([
+            'keyboard' => [
+                ['Редактировать пользователя', 'Удалить пользователя'],
+                ['Назад'],
+            ],
+            'resize_keyboard' => true,
+            'one_time_keyboard' => true,
+        ]);
+    }
+
+    public static function userRoleChangeKeyboard($currentUserId, $page = 1, $itemsPerPage = 5)
+    {
+        // Получаем пользователей, исключая текущего
+        $users = TelegramUser::where('telegram_id', '!=', $currentUserId)
+            ->skip(($page - 1) * $itemsPerPage)
+            ->take($itemsPerPage)
+            ->get();
+
+        $totalUsers = TelegramUser::where('telegram_id', '!=', $currentUserId)->count();
+        $totalPages = ceil($totalUsers / $itemsPerPage);
+
+        $keyboard = Keyboard::make()->inline();
+
+        // Добавляем пользователей
+        foreach ($users as $user) {
+            $keyboard->row([
+                Keyboard::inlineButton([
+                    'text' => "{$user->username} ({$user->role})",
+                    'callback_data' => "change_role_{$user->telegram_id}",
+                ]),
+            ]);
+        }
+
+        // Добавляем пагинацию
+        $paginationRow = [];
+        if ($page > 1) {
+            $paginationRow[] = Keyboard::inlineButton([
+                'text' => 'Назад',
+                'callback_data' => "role_page_" . ($page - 1),
+            ]);
+        }
+
+        $paginationRow[] = Keyboard::inlineButton([
+            'text' => "Страница {$page} из {$totalPages}",
+            'callback_data' => 'ignore',
+        ]);
+
+        if ($page < $totalPages) {
+            $paginationRow[] = Keyboard::inlineButton([
+                'text' => 'Вперед ',
+                'callback_data' => "role_page_" . ($page + 1),
+            ]);
+        }
+
+        $keyboard->row($paginationRow);
+
+        $keyboard->row([
+            Keyboard::inlineButton([
+                'text' => 'Отменить изменение',
+                'callback_data' => 'cancel_role_change',
+            ]),
+        ]);
+
+        return $keyboard;
+    }
+
+    public static function roleSelectionKeyboard()
+    {
+        $keyboard = Keyboard::make()->inline();
+
+        foreach (RoleEnum::cases() as $role) {
+            $keyboard->row([
+                Keyboard::inlineButton([
+                    'text' => $role->value,
+                    'callback_data' => "select_role_{$role->value}",
+                ]),
+            ]);
+        }
+
+        $keyboard->row([
+            Keyboard::inlineButton([
+                'text' => 'Отменить изменение',
+                'callback_data' => 'cancel_role_change',
+            ]),
+        ]);
+
+        return $keyboard;
+    }
+
+    public static function userDeleteKeyboard($currentUserId, $page = 1, $itemsPerPage = 5)
+    {
+        $users = TelegramUser::where('telegram_id', '!=', $currentUserId)
+            ->skip(($page - 1) * $itemsPerPage)
+            ->take($itemsPerPage)
+            ->get();
+
+        $totalUsers = TelegramUser::where('telegram_id', '!=', $currentUserId)->count();
+        $totalPages = ceil($totalUsers / $itemsPerPage);
+
+        $keyboard = Keyboard::make()->inline();
+
+        foreach ($users as $user) {
+            $keyboard->row([
+                Keyboard::inlineButton([
+                    'text' => "{$user->username} ({$user->role})",
+                    'callback_data' => "delete_user_{$user->telegram_id}",
+                ]),
+            ]);
+        }
+
+        $paginationRow = [];
+        if ($page > 1) {
+            $paginationRow[] = Keyboard::inlineButton([
+                'text' => 'Назад',
+                'callback_data' => "delete_page_" . ($page - 1),
+            ]);
+        }
+
+        $paginationRow[] = Keyboard::inlineButton([
+            'text' => "Страница {$page} из {$totalPages}",
+            'callback_data' => 'ignore',
+        ]);
+
+        if ($page < $totalPages) {
+            $paginationRow[] = Keyboard::inlineButton([
+                'text' => 'Вперед',
+                'callback_data' => "delete_page_" . ($page + 1),
+            ]);
+        }
+
+        $keyboard->row($paginationRow);
+
+        $keyboard->row([
+            Keyboard::inlineButton([
+                'text' => 'Отменить удаление',
+                'callback_data' => 'cancel_delete',
+            ]),
+        ]);
+
+        return $keyboard;
+    }
+
+    public static function confirmationKeyboard()
+    {
+        $keyboard = Keyboard::make()->inline();
+
+        $keyboard->row([
+            Keyboard::inlineButton([
+                'text' => 'Да',
+                'callback_data' => 'confirm_yes',
+            ]),
+            Keyboard::inlineButton([
+                'text' => 'Нет',
+                'callback_data' => 'confirm_no',
+            ]),
         ]);
 
         return $keyboard;
