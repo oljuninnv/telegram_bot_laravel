@@ -20,20 +20,16 @@ class StartCommand extends Command
     {
         $telegram = new Api(config('telegram.bot_token'));
         $message = $this->getUpdate()->getMessage();
-        \Log::info('Used command /start');
         $chatId = $message->getChat()->id;
         $userId = $message->from->id;
         $chatType = $message->getChat()->type;
-        \Log::info($chatId);
         UserState::resetState($userId);
         SettingState::clearAll($userId);
 
         if ($chatType === 'private') {
-            \Log::info('its private chat');
             $user = TelegramUser::where('telegram_id', $userId)->first();
 
             if (!$user) {
-                \Log::info('User not found');
                 $user = TelegramUser::create([
                     'telegram_id' => $userId,
                     'first_name' => $message->from->first_name,
