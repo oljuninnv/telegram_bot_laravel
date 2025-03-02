@@ -49,22 +49,6 @@ class Keyboards
             ]);
     }
 
-    // public static function hashtagSettingsKeyboard()
-    // {
-    //     return Keyboard::make()
-    //         ->row([
-    //             Keyboard::button(['text' => 'Создать хэштег']),
-    //         ])
-    //         ->row([
-    //             Keyboard::button(['text' => 'Удалить хэштег']),
-    //             Keyboard::button(['text' => 'Привязать хэштег']),
-    //         ])
-    //         ->row([
-    //             Keyboard::button(['text' => 'Отвязать хэштег']),
-    //             Keyboard::button(['text' => 'Назад']),
-    //         ]);
-    // }
-
     public static function hashtagSettingsKeyboard()
     {
         return Keyboard::make()

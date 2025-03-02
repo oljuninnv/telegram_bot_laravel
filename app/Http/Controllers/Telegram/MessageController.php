@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Telegram;
 
 use App\Http\Controllers\Controller;
 use Telegram\Bot\Api;
+use App\Models\TelegramUser;
 use App\Services\UserState;
 use App\Handlers\MainStateHandler;
 use App\Handlers\SettingsStateHandler;
@@ -16,6 +17,7 @@ use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
 use App\Handlers\UpdateHandlers\Hashtags\AttachHashtagHandler;
 use App\Handlers\UpdateHandlers\Hashtags\CreateHashtagHandler;
 use App\Handlers\UpdateHandlers\Hashtags\DeleteHashtagHandler;
+use App\Enums\RoleEnum;
 
 class MessageController extends Controller
 {
@@ -53,26 +55,27 @@ class MessageController extends Controller
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
 
-        if ($chatId != env('TELEGRAM_USER_ADMIN_ID')) {
-            return response(null, 200);
-        }
-
         $this->botsManager->bot()->commandsHandler(true);
 
-        // Проверяем, есть ли команда в сообщении
         $hasCommand = false;
         if (!empty($update->message->entities)) {
             foreach ($update->message->entities as $entity) {
                 if ($entity->type === 'bot_command') {
                     $hasCommand = true;
-                    break; // Прерываем цикл, если найдена команда
+                    break;
                 }
             }
         }
 
-        // Если команда не найдена, вызываем handleUserState
-        if (!$hasCommand) {
+        $user = TelegramUser::where('telegram_id', $chatId)->first();
+
+        if (!$hasCommand && $user && ($user->role !== RoleEnum::USER->value || $chatId == env('TELEGRAM_USER_ADMIN_ID'))) {
             $this->handleUserState($telegram, $chatId, $userId, $messageText, $messageId);
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'Вам, как обычному пользователю, не доступен функционал бота. Обратитесь к администратору.',
+            ]);
         }
 
         return response(null, 200);
@@ -95,7 +98,7 @@ class MessageController extends Controller
         $currentState = UserState::getState($userId);
         if (isset($handlers[$currentState])) {
             $handler = new $handlers[$currentState]();
-            $handler->handle($telegram, $chatId, $userId, $messageText, $messageId); // Передаём $messageId, а не $this->botsManager
+            $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
         }
 
         return response(null, 200);
