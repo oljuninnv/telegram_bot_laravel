@@ -16,7 +16,7 @@ class Keyboards
                 Keyboard::button('Получить список чатов'),
             ])
             ->row([
-                Keyboard::button('Настройка сбора отчетов'),
+                Keyboard::button('Настройки'),
                 Keyboard::button('Проверить отчеты'),
             ])
             ->row([
@@ -43,6 +43,7 @@ class Keyboards
             ->row([
                 Keyboard::button(['text' => 'Настроить сбор отчётов', 'callback_data' => 'Настроить сбор отчётов']),
                 Keyboard::button(['text' => 'Обновить хэштеги', 'callback_data' => 'Обновить хэштеги']),
+                Keyboard::button(['text' => 'Настройка пользователей', 'callback_data' => 'Настройка пользователей']),
             ])
             ->row([
                 Keyboard::button(['text' => 'Назад', 'callback_data' => 'Назад']),

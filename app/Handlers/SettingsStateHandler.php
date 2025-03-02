@@ -50,6 +50,14 @@ class SettingsStateHandler
                 UserState::setState($userId, 'updateHashtags');
                 break;
 
+            case 'Настройка пользователей':
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => 'Вы выбрали настройку пользователей',
+                    'reply_markup' => Keyboards::mainAdminKeyboard(),
+                ]);
+                break;
+
             case 'Назад':
                 UserState::resetState($userId);
                 $telegram->sendMessage([

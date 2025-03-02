@@ -69,9 +69,9 @@ class MessageController extends Controller
 
         $user = TelegramUser::where('telegram_id', $chatId)->first();
 
-        if (!$hasCommand && $user && ($user->role !== RoleEnum::USER->value || $chatId == env('TELEGRAM_USER_ADMIN_ID'))) {
+        if (!$hasCommand && ($user->role !== RoleEnum::USER->value || $chatId == env('TELEGRAM_USER_ADMIN_ID'))) {
             $this->handleUserState($telegram, $chatId, $userId, $messageText, $messageId);
-        } else {
+        } else if (!$hasCommand && $user->role === RoleEnum::USER->value) {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => 'Вам, как обычному пользователю, не доступен функционал бота. Обратитесь к администратору.',

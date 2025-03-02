@@ -23,7 +23,7 @@ class MainStateHandler
                 $this->handleGetChatsList($telegram, $chatId);
                 break;
 
-            case 'Настройка сбора отчетов':
+            case 'Настройки':
                 $this->handleReportSettings($telegram, $chatId, $userId);
                 break;
 
