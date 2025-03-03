@@ -63,7 +63,7 @@ class SettingsStateHandler
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text' => 'Вы вернулись в главное меню.',
-                    'reply_markup' => Keyboards::mainAdminKeyboard(),
+                    'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
                 ]);
                 break;
 

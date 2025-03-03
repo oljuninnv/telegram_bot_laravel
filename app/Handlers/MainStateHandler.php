@@ -11,6 +11,8 @@ use App\Models\Hashtag;
 use App\Helpers\HashtagHelper;
 use App\Models\Report;
 use Carbon\Carbon;
+use App\Models\TelegramUser;
+use App\Enums\RoleEnum;
 
 class MainStateHandler
 {
@@ -18,32 +20,57 @@ class MainStateHandler
 
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
-      switch ($messageText) {
-            case 'Получить список чатов':
-                $this->handleGetChatsList($telegram, $chatId);
-                break;
+        $user = TelegramUser::where('telegram_id', $chatId)->first();
+        if ($user->role == RoleEnum::SUPER_ADMIN->value) {
+            switch ($messageText) {
+                case 'Получить список чатов':
+                    $this->handleGetChatsList($telegram, $chatId);
+                    break;
 
-            case 'Настройки':
-                $this->handleReportSettings($telegram, $chatId, $userId);
-                break;
+                case 'Настройки':
+                    $this->handleReportSettings($telegram, $chatId, $userId);
+                    break;
 
-            case 'Проверить отчеты':
-                $this->handleCheckReports($telegram, $chatId);
-                break;
+                case 'Проверить отчеты':
+                    $this->handleCheckReports($telegram, $chatId);
+                    break;
 
-            case 'Помощь':
-                $this->handleHelp($telegram, $chatId);
-                break;
+                case 'Помощь':
+                    $this->handleHelp($telegram, $chatId,$user);
+                    break;
 
-            default:
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
-                    'reply_markup' => Keyboards::mainAdminKeyboard(),
-                ]);
-                break;
+                default:
+                    $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
+                        'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
+                    ]);
+                    break;
+            }
+        } else {
+            switch ($messageText) {
+                case 'Получить список чатов':
+                    $this->handleGetChatsList($telegram, $chatId);
+                    break;
 
+                case 'Проверить отчеты':
+                    $this->handleCheckReports($telegram, $chatId);
+                    break;
+
+                case 'Помощь':
+                    $this->handleHelp($telegram, $chatId,$user);
+                    break;
+
+                default:
+                    $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
+                        'reply_markup' => Keyboards::mainAdminKeyboard(),
+                    ]);
+                    break;
+            }
         }
+
     }
 
     private function handleGetChatsList(Api $telegram, int $chatId)
@@ -161,14 +188,24 @@ class MainStateHandler
         }
     }
 
-    private function handleHelp(Api $telegram, int $chatId)
+    private function handleHelp(Api $telegram, int $chatId, $user)
     {
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
-                "1. Получить список чатов - Позволяет получить список доступных чатов.\n" .
-                "2. Настройка сбора отчетов - Позволяет настроить параметры сбора отчетов.\n" .
-                "3. Проверить отчеты - Проверяет отчёты за текущий период и их статус.\n",
-        ]);
+        if ($user->role == RoleEnum::SUPER_ADMIN->value) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
+                    "1. Получить список чатов - Позволяет получить список доступных чатов.\n" .
+                    "2. Настройки - Позволяет настроить параметры сбора отчетов, хэштеги и пользователей системы.\n" .
+                    "3. Проверить отчеты - Проверяет отчёты за текущий период и их статус.\n",
+            ]);
+        }
+        else{
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "Данный бот предназначен для управления отчетами и взаимодействия с чатами. Вот список доступных команд:\n\n" .
+                    "1. Получить список чатов - Позволяет получить список доступных чатов.\n" .
+                    "2. Проверить отчеты - Проверяет отчёты за текущий период и их статус.\n",
+            ]);
+        }
     }
 }

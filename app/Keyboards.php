@@ -9,7 +9,7 @@ use App\Enums\RoleEnum;
 
 class Keyboards
 {
-    public static function mainAdminKeyboard()
+    public static function mainSuperAdminKeyboard()
     {
         return Keyboard::make()
             ->setResizeKeyboard(true)
@@ -19,6 +19,22 @@ class Keyboards
             ])
             ->row([
                 Keyboard::button('Настройки'),
+                Keyboard::button('Проверить отчеты'),
+            ])
+            ->row([
+                Keyboard::button('Помощь'),
+            ]);
+    }
+
+    public static function mainAdminKeyboard()
+    {
+        return Keyboard::make()
+            ->setResizeKeyboard(true)
+            ->setOneTimeKeyboard(true)
+            ->row([
+                Keyboard::button('Получить список чатов'),
+            ])
+            ->row([
                 Keyboard::button('Проверить отчеты'),
             ])
             ->row([

@@ -41,35 +41,47 @@ class StartCommand extends Command
                     'role' => RoleEnum::USER->value,
                 ]);
 
-                $adminChatId = env('TELEGRAM_USER_ADMIN_ID');
-                if ($adminChatId) {
-                    $adminMessage = "Новый пользователь:\n"
-                        . "Имя: {$user->first_name}\n"
-                        . "Фамилия: {$user->last_name}\n"
-                        . "Username: @{$user->username}";
 
+                $adminMessage = "Новый пользователь:\n"
+                    . "Имя: {$user->first_name}\n"
+                    . "Фамилия: {$user->last_name}\n"
+                    . "Username: @{$user->username}";
+
+                $users = TelegramUser::all()->where('role', '==', RoleEnum::SUPER_ADMIN->value);
+                foreach ($users as $user) {
                     $telegram->sendMessage([
-                        'chat_id' => $adminChatId,
+                        'chat_id' => $user->telegram_id,
                         'text' => $adminMessage,
                     ]);
                 }
+            } else {
+                if ($user->role != RoleEnum::USER->value) {
+                    if ($user->role == RoleEnum::SUPER_ADMIN->value) {
+                        $response = "Добрый день, рад вас видеть";
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => $response,
+                            'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
+                        ]);
+                    }
+                    else{
+                        $response = "Добрый день, рад вас видеть";
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => $response,
+                            'reply_markup' => Keyboards::mainAdminKeyboard(),
+                        ]);
+                    }
 
+                } else {
+                    $response = "Добрый день. Вы не являетесь администратором, поэтому функционал бота вам не доступен. Свяжитесь с администратором, чтобы поменять роль.";
+                    $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => $response,
+                        'reply_markup' => json_encode(['remove_keyboard' => true])
+                    ]);
+                }
             }
-        }
-
-        if ($chatId == env('TELEGRAM_USER_ADMIN_ID')) {
-            $response = "Добрый день, рад вас видеть";
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => $response,
-                'reply_markup' => Keyboards::mainAdminKeyboard(),
-            ]);
-        } else {
-            $response = "Добрый день. Вы не являетесь администратором, поэтому функционал бота вам не доступен. Свяжитесь с администратором, чтобы поменять роль.";
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => $response,
-            ]);
         }
     }
 }

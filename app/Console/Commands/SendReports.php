@@ -10,7 +10,8 @@ use App\Models\Report;
 use Carbon\Carbon;
 use Telegram\Bot\Api;
 use App\Enums\DayOfWeekEnums;
-use Google\Client;
+use App\Models\TelegramUser;
+use App\Enums\RoleEnum;
 use Google\Service\Sheets;
 use App\Helpers\GoogleHelper;
 
@@ -79,11 +80,13 @@ class SendReports extends Command
                 implode("\n", $chatLinks)
             ];
 
-            // Отправляем отчёт в Telegram
-            $telegram->sendMessage([
-                'chat_id' => env('TELEGRAM_USER_ADMIN_ID'),
-                'text' => $message,
-            ]);
+            $users = TelegramUser::all()->where('role', '!=', RoleEnum::USER->value);
+            foreach ($users as $user) {
+                $telegram->sendMessage([
+                    'chat_id' => $user->telegram_id,
+                    'text' => $message,
+                ]);
+            }
         }
 
         // Создаем Google таблицу
@@ -104,12 +107,14 @@ class SendReports extends Command
         // Заполняем лист данными
         $this->fillGoogleSheet($service, $spreadsheetId, $sheetName, $googleSheetData);
 
-        // Отправляем ссылку на таблицу
         $spreadsheetUrl = "https://docs.google.com/spreadsheets/d/{$spreadsheetId}/edit#gid=0";
-        $telegram->sendMessage([
-            'chat_id' => env('TELEGRAM_USER_ADMIN_ID'),
-            'text' => "Ссылка на Google таблицу: {$spreadsheetUrl}",
-        ]);
+        $users = TelegramUser::all()->where('role', '!=', RoleEnum::USER->value);
+        foreach ($users as $user) {
+            $telegram->sendMessage([
+                'chat_id' => $user->telegram_id,
+                'text' => "Ссылка на Google таблицу: {$spreadsheetUrl}",
+            ]);
+        }
 
         // Обновляем current_period_end_date
         $this->updatePeriodEndDate($settings, $currentPeriodEndDate, $weeksInPeriod, $reportDay, $reportTime);
