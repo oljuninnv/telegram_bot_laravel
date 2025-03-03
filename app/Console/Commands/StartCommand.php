@@ -10,7 +10,6 @@ use App\Services\SettingState;
 use App\Services\UserDataService;
 use App\Models\TelegramUser;
 use App\Enums\RoleEnum;
-use Illuminate\Support\Facades\Log;
 
 class StartCommand extends Command
 {
@@ -32,53 +31,68 @@ class StartCommand extends Command
         if ($chatType === 'private') {
             $user = TelegramUser::where('telegram_id', $userId)->first();
 
-            if (!$user) {
+            if ($user && $user->banned) {
+                $response = "Ваш аккаунт заблокирован. Обратитесь к администратору для решения данной проблемы.";
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => $response,
+                    'reply_markup' => json_encode(['remove_keyboard' => true]),
+                ]);
+                return; 
+            }
+
+            if (!$user) { 
                 $user = TelegramUser::create([
                     'telegram_id' => $userId,
                     'first_name' => $message->from->first_name,
                     'last_name' => $message->from->last_name ?? null,
                     'username' => $message->from->username ?? null,
                     'role' => RoleEnum::USER->value,
+                    'banned' => false,
                 ]);
-
 
                 $adminMessage = "Новый пользователь:\n"
                     . "Имя: {$user->first_name}\n"
                     . "Фамилия: {$user->last_name}\n"
                     . "Username: @{$user->username}";
 
-                $users = TelegramUser::all()->where('role', '==', RoleEnum::SUPER_ADMIN->value);
-                foreach ($users as $user) {
+                $admins = TelegramUser::where('role', RoleEnum::SUPER_ADMIN->value)->get();
+                foreach ($admins as $admin) {
                     $telegram->sendMessage([
-                        'chat_id' => $user->telegram_id,
+                        'chat_id' => $admin->telegram_id,
                         'text' => $adminMessage,
                     ]);
                 }
+
+                $response = "Добро пожаловать! Вы зарегистрированы как обычный пользователь. Если вам нужен доступ к функционалу бота, свяжитесь с администратором.";
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => $response,
+                    'reply_markup' => json_encode(['remove_keyboard' => true]),
+                ]);
             } else {
                 if ($user->role != RoleEnum::USER->value) {
                     if ($user->role == RoleEnum::SUPER_ADMIN->value) {
-                        $response = "Добрый день, рад вас видеть";
+                        $response = "Добрый день, рад вас видеть!";
                         $telegram->sendMessage([
                             'chat_id' => $chatId,
                             'text' => $response,
                             'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
                         ]);
-                    }
-                    else{
-                        $response = "Добрый день, рад вас видеть";
+                    } else {
+                        $response = "Добрый день, рад вас видеть!";
                         $telegram->sendMessage([
                             'chat_id' => $chatId,
                             'text' => $response,
                             'reply_markup' => Keyboards::mainAdminKeyboard(),
                         ]);
                     }
-
                 } else {
                     $response = "Добрый день. Вы не являетесь администратором, поэтому функционал бота вам не доступен. Свяжитесь с администратором, чтобы поменять роль.";
                     $telegram->sendMessage([
                         'chat_id' => $chatId,
                         'text' => $response,
-                        'reply_markup' => json_encode(['remove_keyboard' => true])
+                        'reply_markup' => json_encode(['remove_keyboard' => true]),
                     ]);
                 }
             }
