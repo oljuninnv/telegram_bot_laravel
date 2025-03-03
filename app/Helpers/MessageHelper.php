@@ -36,13 +36,20 @@ trait MessageHelper
      * @param Api $telegram
      * @param int $chatId
      * @param string $text
+     * @param mixed $replyMarkup (опционально)
      */
-    protected function sendMessage(Api $telegram, int $chatId, string $text)
+    protected function sendMessage(Api $telegram, int $chatId, string $text, $replyMarkup = null): void
     {
-        $telegram->sendMessage([
+        $params = [
             'chat_id' => $chatId,
             'text' => $text,
-        ]);
+        ];
+
+        if ($replyMarkup !== null) {
+            $params['reply_markup'] = $replyMarkup;
+        }
+
+        $telegram->sendMessage($params);
     }
 
     protected function deleteMessage(Api $telegram, int $chatId, ?int $messageId): void
