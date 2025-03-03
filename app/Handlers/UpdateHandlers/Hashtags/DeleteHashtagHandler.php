@@ -16,7 +16,7 @@ class DeleteHashtagHandler
 
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
-        if ($messageText === 'back_to_settings') {
+        if ($messageText === 'exit') {
             UserState::setState($userId, 'updateHashtags');
             $this->deleteMessage($telegram, $chatId, $messageId);
             $this->sendMessage($telegram, $chatId, 'Вы вернулись в меню настроек хэштегов', Keyboards::hashtagSettingsKeyboard());

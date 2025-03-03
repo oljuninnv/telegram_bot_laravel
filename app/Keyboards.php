@@ -4,12 +4,14 @@ namespace App;
 
 use Telegram\Bot\Keyboard\Keyboard;
 use App\Models\Setting_Hashtag;
-use App\Models\TelegramUser;
 use App\Enums\RoleEnum;
+use App\Helpers\KeyboardHelper;
 
 class Keyboards
 {
-    public static function mainSuperAdminKeyboard()
+    use KeyboardHelper;
+
+    public static function mainSuperAdminKeyboard(): Keyboard
     {
         return Keyboard::make()
             ->setResizeKeyboard(true)
@@ -26,7 +28,7 @@ class Keyboards
             ]);
     }
 
-    public static function mainAdminKeyboard()
+    public static function mainAdminKeyboard(): Keyboard
     {
         return Keyboard::make()
             ->setResizeKeyboard(true)
@@ -42,7 +44,7 @@ class Keyboards
             ]);
     }
 
-    public static function settingsAdminKeyboard()
+    public static function settingsAdminKeyboard(): Keyboard
     {
         return Keyboard::make()
             ->setResizeKeyboard(true)
@@ -55,7 +57,7 @@ class Keyboards
             ]);
     }
 
-    public static function updateSettingsKeyboard()
+    public static function updateSettingsKeyboard(): Keyboard
     {
         return Keyboard::make()
             ->row([
@@ -68,7 +70,7 @@ class Keyboards
             ]);
     }
 
-    public static function hashtagSettingsKeyboard()
+    public static function hashtagSettingsKeyboard(): Keyboard
     {
         return Keyboard::make()
             ->row([
@@ -81,7 +83,7 @@ class Keyboards
             ]);
     }
 
-    public static function backAdminKeyboard()
+    public static function backAdminKeyboard(): Keyboard
     {
         return Keyboard::make()
             ->setResizeKeyboard(true)
@@ -91,7 +93,7 @@ class Keyboards
             ]);
     }
 
-    public static function getDaysOfWeekKeyboard(bool $settingsExist = true)
+    public static function getDaysOfWeekKeyboard(bool $settingsExist = true): Keyboard
     {
         $keyboard = Keyboard::make()->inline();
 
@@ -115,18 +117,14 @@ class Keyboards
         return $keyboard;
     }
 
-    public static function LeaveTheCurrentKeyboard()
+    public static function leaveTheCurrentKeyboard(): Keyboard
     {
-        $keyboard = Keyboard::make()->inline();
-
-        $keyboard->row([
+        return Keyboard::make()->inline()->row([
             Keyboard::inlineButton(['text' => 'Оставить текущее', 'callback_data' => 'Оставить текущее']),
         ]);
-
-        return $keyboard;
     }
 
-    public static function HashTagsInlineKeyboard($hashtags, $currentPage = 1, $itemsPerPage = 2)
+    public static function hashtagsInlineKeyboard($hashtags, int $currentPage = 1, int $itemsPerPage = 2): Keyboard
     {
         $keyboard = Keyboard::make()->inline();
 
@@ -136,45 +134,25 @@ class Keyboards
         $startIndex = ($currentPage - 1) * $itemsPerPage;
         $endIndex = min($startIndex + $itemsPerPage, $totalHashtags);
 
-        // Добавляем хэштеги на текущей странице
         for ($i = $startIndex; $i < $endIndex; $i++) {
             $hashtag = $hashtags[$i];
             $isAttached = Setting_Hashtag::where('hashtag_id', $hashtag->id)->exists();
 
-            if ($isAttached) {
-                $keyboard->row([
-                    Keyboard::inlineButton(['text' => 'Отвязать хэштег: ' . $hashtag->hashtag, 'callback_data' => 'detach_' . $hashtag->id]),
-                ]);
-            } else {
-                $keyboard->row([
-                    Keyboard::inlineButton(['text' => 'Привязать хэштег: ' . $hashtag->hashtag, 'callback_data' => 'attach_' . $hashtag->id]),
-                ]);
-            }
+            $keyboard->row([
+                Keyboard::inlineButton([
+                    'text' => $isAttached ? "Отвязать хэштег: {$hashtag->hashtag}" : "Привязать хэштег: {$hashtag->hashtag}",
+                    'callback_data' => $isAttached ? "detach_{$hashtag->id}" : "attach_{$hashtag->id}",
+                ]),
+            ]);
         }
 
-        $row = [];
-
-        if ($currentPage > 1) {
-            $row[] = Keyboard::inlineButton(['text' => 'Назад', 'callback_data' => 'page_' . ($currentPage - 1)]);
-        }
-
-        // Кнопка счётчика (неактивная)
-        $row[] = Keyboard::inlineButton(['text' => "Страница {$currentPage} из {$totalPages}", 'callback_data' => 'ignore']);
-
-        if ($currentPage < $totalPages) {
-            $row[] = Keyboard::inlineButton(['text' => 'Вперед', 'callback_data' => 'page_' . ($currentPage + 1)]);
-        }
-
-        $keyboard->row($row);
-
-        $keyboard->row([
-            Keyboard::inlineButton(['text' => 'Закончить настройку', 'callback_data' => 'back_to_settings']),
-        ]);
+        $keyboard = self::addPagination($keyboard, $currentPage, $totalPages, 'page');
+        $keyboard = self::addExitButton($keyboard);
 
         return $keyboard;
     }
 
-    public static function DeleteHashTagsInlineKeyboard($hashtags, $currentPage = 1, $itemsPerPage = 2)
+    public static function deleteHashtagsInlineKeyboard($hashtags, int $currentPage = 1, int $itemsPerPage = 2): Keyboard
     {
         $keyboard = Keyboard::make()->inline();
 
@@ -186,34 +164,21 @@ class Keyboards
 
         for ($i = $startIndex; $i < $endIndex; $i++) {
             $hashtag = $hashtags[$i];
-
             $keyboard->row([
-                Keyboard::inlineButton(['text' => $hashtag->hashtag, 'callback_data' => 'delete_' . $hashtag->id]),
+                Keyboard::inlineButton([
+                    'text' => $hashtag->hashtag,
+                    'callback_data' => "delete_{$hashtag->id}",
+                ]),
             ]);
         }
 
-        $row = [];
-
-        if ($currentPage > 1) {
-            $row[] = Keyboard::inlineButton(['text' => 'Назад', 'callback_data' => 'page_' . ($currentPage - 1)]);
-        }
-
-        $row[] = Keyboard::inlineButton(['text' => "Страница {$currentPage} из {$totalPages}", 'callback_data' => 'ignore']);
-
-        if ($currentPage < $totalPages) {
-            $row[] = Keyboard::inlineButton(['text' => 'Вперед', 'callback_data' => 'page_' . ($currentPage + 1)]);
-        }
-
-        $keyboard->row($row);
-
-        $keyboard->row([
-            Keyboard::inlineButton(['text' => 'Закончить', 'callback_data' => 'back_to_settings']),
-        ]);
+        $keyboard = self::addPagination($keyboard, $currentPage, $totalPages, 'page');
+        $keyboard = self::addExitButton($keyboard);
 
         return $keyboard;
     }
 
-    public static function userSettingsKeyboard()
+    public static function userSettingsKeyboard(): Keyboard
     {
         return Keyboard::make([
             'keyboard' => [
@@ -225,14 +190,18 @@ class Keyboards
         ]);
     }
 
-    public static function userRoleChangeKeyboard($users, $page = 1, $itemsPerPage = 5)
+    public static function userRoleChangeKeyboard($users, int $page = 1, int $itemsPerPage = 2): Keyboard
     {
+        $keyboard = Keyboard::make()->inline();
+
         $totalUsers = count($users);
         $totalPages = ceil($totalUsers / $itemsPerPage);
 
-        $keyboard = Keyboard::make()->inline();
+        $startIndex = ($page - 1) * $itemsPerPage;
+        $endIndex = min($startIndex + $itemsPerPage, $totalUsers);
 
-        foreach ($users as $user) {
+        for ($i = $startIndex; $i < $endIndex; $i++) {
+            $user = $users[$i];
             $keyboard->row([
                 Keyboard::inlineButton([
                     'text' => "{$user->username} ({$user->role})",
@@ -241,40 +210,14 @@ class Keyboards
             ]);
         }
 
-        // Добавляем пагинацию
-        $paginationRow = [];
-        if ($page > 1) {
-            $paginationRow[] = Keyboard::inlineButton([
-                'text' => 'Назад',
-                'callback_data' => "role_page_" . ($page - 1),
-            ]);
-        }
+        $keyboard = self::addPagination($keyboard, $page, $totalPages, 'role_page');
 
-        $paginationRow[] = Keyboard::inlineButton([
-            'text' => "Страница {$page} из {$totalPages}",
-            'callback_data' => 'ignore',
-        ]);
-
-        if ($page < $totalPages) {
-            $paginationRow[] = Keyboard::inlineButton([
-                'text' => 'Вперед ',
-                'callback_data' => "role_page_" . ($page + 1),
-            ]);
-        }
-
-        $keyboard->row($paginationRow);
-
-        $keyboard->row([
-            Keyboard::inlineButton([
-                'text' => 'Отменить изменение',
-                'callback_data' => 'cancel_role_change',
-            ]),
-        ]);
+        $keyboard = self::addExitButton($keyboard);
 
         return $keyboard;
     }
 
-    public static function roleSelectionKeyboard()
+    public static function roleSelectionKeyboard(): Keyboard
     {
         $keyboard = Keyboard::make()->inline();
 
@@ -287,22 +230,17 @@ class Keyboards
             ]);
         }
 
-        $keyboard->row([
-            Keyboard::inlineButton([
-                'text' => 'Отменить изменение',
-                'callback_data' => 'cancel_role_change',
-            ]),
-        ]);
+        $keyboard = self::addExitButton($keyboard);
 
         return $keyboard;
     }
 
-    public static function userBlockKeyboard($users, $currentPage = 1, $itemsPerPage = 5)
+    public static function userBlockKeyboard($users, int $currentPage = 1, int $itemsPerPage = 2): Keyboard
     {
+        $keyboard = Keyboard::make()->inline();
+
         $totalUsers = count($users);
         $totalPages = ceil($totalUsers / $itemsPerPage);
-
-        $keyboard = Keyboard::make()->inline();
 
         $startIndex = ($currentPage - 1) * $itemsPerPage;
         $endIndex = min($startIndex + $itemsPerPage, $totalUsers);
@@ -312,49 +250,22 @@ class Keyboards
             $status = $user->banned ? ' (Заблокирован)' : ' (Активен)';
             $keyboard->row([
                 Keyboard::inlineButton([
-                    'text' => "{$user->username} {$status}", 
+                    'text' => "{$user->username} {$status}",
                     'callback_data' => "toggle_block_{$user->telegram_id}",
                 ]),
             ]);
         }
 
-        $paginationRow = [];
-        if ($currentPage > 1) {
-            $paginationRow[] = Keyboard::inlineButton([
-                'text' => 'Назад',
-                'callback_data' => "page_" . ($currentPage - 1),
-            ]);
-        }
+        $keyboard = self::addPagination($keyboard, $currentPage, $totalPages, 'page');
 
-        $paginationRow[] = Keyboard::inlineButton([
-            'text' => "Страница {$currentPage} из {$totalPages}",
-            'callback_data' => 'ignore',
-        ]);
-
-        if ($currentPage < $totalPages) {
-            $paginationRow[] = Keyboard::inlineButton([
-                'text' => 'Вперед',
-                'callback_data' => "page_" . ($currentPage + 1),
-            ]);
-        }
-
-        $keyboard->row($paginationRow);
-
-        $keyboard->row([
-            Keyboard::inlineButton([
-                'text' => 'Отменить блокировку',
-                'callback_data' => 'cancel_block',
-            ]),
-        ]);
+        $keyboard = self::addExitButton($keyboard);
 
         return $keyboard;
     }
 
-    public static function confirmationKeyboard()
+    public static function confirmationKeyboard(): Keyboard
     {
-        $keyboard = Keyboard::make()->inline();
-
-        $keyboard->row([
+        return Keyboard::make()->inline()->row([
             Keyboard::inlineButton([
                 'text' => 'Да',
                 'callback_data' => 'confirm_yes',
@@ -364,7 +275,5 @@ class Keyboards
                 'callback_data' => 'confirm_no',
             ]),
         ]);
-
-        return $keyboard;
     }
 }

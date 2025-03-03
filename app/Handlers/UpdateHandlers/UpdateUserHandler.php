@@ -16,7 +16,7 @@ class UpdateUserHandler
     {
         switch ($messageText) {
             case 'Редактировать пользователя':
-                $users = TelegramUser::all()->Where('telegram_id','!=',$userId);
+                $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text' => 'Выберите пользователя, которому вы бы хотели изменить роль. Также вы можете ввести username пользователя без @, чтобы было проще найти подходящего пользователя:',

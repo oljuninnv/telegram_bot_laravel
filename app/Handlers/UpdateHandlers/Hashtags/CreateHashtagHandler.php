@@ -61,7 +61,6 @@ class CreateHashtagHandler
                     'reply_markup' => Keyboards::hashtagSettingsKeyboard(),
                 ]);
 
-                // Устанавливаем состояние пользователя
                 UserState::setState($userId, 'updateHashtags');
             } catch (\Exception $e) {
 

@@ -8,7 +8,6 @@ use App\Keyboards;
 use App\Services\UserState;
 use App\Services\UserDataService;
 use App\Helpers\MessageHelper;
-use Illuminate\Support\Facades\Log;
 
 class BlockUserHandler
 {
@@ -16,7 +15,7 @@ class BlockUserHandler
 
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
-        if ($messageText === 'cancel_block') {
+        if ($messageText === 'exit') {
             UserState::setState($userId, 'updateUsers');
             UserDataService::clearData($userId);
             $this->deleteMessage($telegram, $chatId, $messageId);
@@ -74,7 +73,7 @@ class BlockUserHandler
 
                 if ($userModel) {
                     if ($isBanned) {
-                        $userModel->update(['banned' => false]); 
+                        $userModel->update(['banned' => false]); // Разблокируем
                         $statusMessage = "Пользователь @{$username} был разблокирован.";
                         $userMessage = "Ваш аккаунт был разблокирован администратором.";
                     } else {
@@ -102,7 +101,6 @@ class BlockUserHandler
             return;
         }
 
-        // Обработка отмены подтверждения
         if ($messageText === 'confirm_no') {
             $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
 
@@ -116,21 +114,13 @@ class BlockUserHandler
         if ($usersSearch->isEmpty()) {
             $users = TelegramUser::where('telegram_id', '!=', $chatId)->get();
 
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Схожие username пользователей не были найдены. Если вы хотите выйти из настройки, нажмите кнопку "Отменить блокировку"',
-                'reply_markup' => Keyboards::userBlockKeyboard($users)
-            ]);
+            $this->sendMessage($telegram, $chatId, 'Схожие username пользователей не были найдены. Если вы хотите выйти из настройки, нажмите кнопку "Отменить блокировку"', Keyboards::userBlockKeyboard($users));
         } else {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => "Ищем схожие username с {$messageText}",
-                'reply_markup' => Keyboards::userBlockKeyboard($usersSearch)
-            ]);
+            $this->sendMessage($telegram, $chatId, "Ищем схожие username с {$messageText}", Keyboards::userBlockKeyboard($usersSearch));
         }
     }
 
-    private function deleteMessage(Api $telegram, int $chatId, ?int $messageId)
+    private function deleteMessage(Api $telegram, int $chatId, ?int $messageId): void
     {
         if ($messageId) {
             $telegram->deleteMessage([
@@ -140,7 +130,7 @@ class BlockUserHandler
         }
     }
 
-    private function sendMessage(Api $telegram, int $chatId, string $text, $replyMarkup = null)
+    private function sendMessage(Api $telegram, int $chatId, string $text, $replyMarkup = null): void
     {
         $telegram->sendMessage([
             'chat_id' => $chatId,

@@ -44,4 +44,15 @@ trait MessageHelper
             'text' => $text,
         ]);
     }
+
+    protected function deleteMessage(Api $telegram, int $chatId, ?int $messageId): void
+    {
+        if ($messageId) {
+            $telegram->deleteMessage([
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+            ]);
+        }
+    }
+    
 }
