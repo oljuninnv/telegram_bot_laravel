@@ -86,23 +86,4 @@ class AttachHashtagHandler
             return;
         }
     }
-
-    private function deleteMessage(Api $telegram, int $chatId, ?int $messageId)
-    {
-        if ($messageId) {
-            $telegram->deleteMessage([
-                'chat_id' => $chatId,
-                'message_id' => $messageId,
-            ]);
-        }
-    }
-
-    private function sendMessage(Api $telegram, int $chatId, string $text, $replyMarkup = null)
-    {
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => $text,
-            'reply_markup' => $replyMarkup,
-        ]);
-    }
 }
