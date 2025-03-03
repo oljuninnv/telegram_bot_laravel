@@ -108,10 +108,22 @@ class EditUserHandler
             return;
         }
 
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => 'Данный текст не является идентификатором пользователя. Если хотите выйти из настройки, нажмите кнопку "Отменить изменение"',
-        ]);
+        $usersSearch = TelegramUser::where('username', 'LIKE', $messageText . '%')->get();
+        if($usersSearch->isEmpty()) {
+            $users = TelegramUser::all()->where('telegram_id','!=',$chatId);
+        
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'Схожие username пользователей не были найдены. Если вы хотите выйти из настройки, нажмите кнопку "Отменить удаление"',
+                'reply_markup' => Keyboards::userRoleChangeKeyboard($users)
+            ]);
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "Ищем схожие username с {$messageText}",
+                'reply_markup' => Keyboards::userRoleChangeKeyboard($usersSearch)
+            ]);
+        }
     }
 
     private function deleteMessage(Api $telegram, int $chatId, ?int $messageId)

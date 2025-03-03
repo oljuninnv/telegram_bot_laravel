@@ -111,7 +111,7 @@ class DeleteHashtagHandler
         
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => 'Данный текст не является хэштегом или его идентификатором. Если хотите выйти из настройки, нажмите кнопку "Закончить настройку"',
+                'text' => 'Схожие хэштеги не были найдены. Если хотите выйти из настройки, нажмите кнопку "Закончить настройку"',
                 'reply_markup' => Keyboards::DeleteHashTagsInlineKeyboard($hashtags)
             ]);
         } else {
