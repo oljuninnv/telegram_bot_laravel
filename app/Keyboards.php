@@ -217,7 +217,7 @@ class Keyboards
     {
         return Keyboard::make([
             'keyboard' => [
-                ['Редактировать пользователя', 'Удалить пользователя'],
+                ['Редактировать пользователя', 'Заблокировать пользователя'],
                 ['Назад'],
             ],
             'resize_keyboard' => true,
@@ -297,39 +297,44 @@ class Keyboards
         return $keyboard;
     }
 
-    public static function userDeleteKeyboard($users, $page = 1, $itemsPerPage = 5)
+    public static function userBlockKeyboard($users, $currentPage = 1, $itemsPerPage = 5)
     {
         $totalUsers = count($users);
         $totalPages = ceil($totalUsers / $itemsPerPage);
 
         $keyboard = Keyboard::make()->inline();
 
-        foreach ($users as $user) {
+        $startIndex = ($currentPage - 1) * $itemsPerPage;
+        $endIndex = min($startIndex + $itemsPerPage, $totalUsers);
+
+        for ($i = $startIndex; $i < $endIndex; $i++) {
+            $user = $users[$i];
+            $status = $user->banned ? ' (Заблокирован)' : ' (Активен)';
             $keyboard->row([
                 Keyboard::inlineButton([
-                    'text' => "{$user->username} ({$user->role})",
-                    'callback_data' => "delete_user_{$user->telegram_id}",
+                    'text' => "{$user->username} {$status}", 
+                    'callback_data' => "toggle_block_{$user->telegram_id}",
                 ]),
             ]);
         }
 
         $paginationRow = [];
-        if ($page > 1) {
+        if ($currentPage > 1) {
             $paginationRow[] = Keyboard::inlineButton([
                 'text' => 'Назад',
-                'callback_data' => "delete_page_" . ($page - 1),
+                'callback_data' => "page_" . ($currentPage - 1),
             ]);
         }
 
         $paginationRow[] = Keyboard::inlineButton([
-            'text' => "Страница {$page} из {$totalPages}",
+            'text' => "Страница {$currentPage} из {$totalPages}",
             'callback_data' => 'ignore',
         ]);
 
-        if ($page < $totalPages) {
+        if ($currentPage < $totalPages) {
             $paginationRow[] = Keyboard::inlineButton([
                 'text' => 'Вперед',
-                'callback_data' => "delete_page_" . ($page + 1),
+                'callback_data' => "page_" . ($currentPage + 1),
             ]);
         }
 
@@ -337,8 +342,8 @@ class Keyboards
 
         $keyboard->row([
             Keyboard::inlineButton([
-                'text' => 'Отменить удаление',
-                'callback_data' => 'cancel_delete',
+                'text' => 'Отменить блокировку',
+                'callback_data' => 'cancel_block',
             ]),
         ]);
 

@@ -57,7 +57,6 @@ class AttachHashtagHandler
                 $settingHashtag = Setting_Hashtag::where('setting_id', $settings->id)
                     ->where('hashtag_id', $hashtagModel->id)
                     ->first();
-                \Log::info($settingHashtag);
                 if ($settingHashtag) {
                     $responseText = "Хэштег {$settingHashtag->hashtag->hashtag} успешно отвязан!";
                     $settingHashtag->delete();                    
@@ -69,7 +68,6 @@ class AttachHashtagHandler
             return;
         } else {
             $hashtagsSearch = Hashtag::where('hashtag', 'LIKE', $messageText . '%')->get();
-            \Log::info("Hashtag - {$hashtagsSearch->isEmpty()}");
             if($hashtagsSearch->isEmpty()) {
                 $hashtags = Hashtag::all();
             

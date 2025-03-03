@@ -105,7 +105,6 @@ class DeleteHashtagHandler
         }
 
         $hashtagsSearch = Hashtag::where('hashtag', 'LIKE', $messageText . '%')->get();
-        \Log::info("Hashtag - {$hashtagsSearch->isEmpty()}");
         if($hashtagsSearch->isEmpty()) {
             $hashtags = Hashtag::all();
         

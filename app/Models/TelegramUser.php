@@ -22,6 +22,7 @@ class TelegramUser extends Model
      * @var array
      */
     protected $fillable = [
+        'banned',
         'telegram_id',
         'first_name',
         'last_name',

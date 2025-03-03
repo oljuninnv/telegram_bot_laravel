@@ -1,0 +1,151 @@
+<?php
+
+namespace App\Handlers\UpdateHandlers\Users;
+
+use Telegram\Bot\Api;
+use App\Models\TelegramUser;
+use App\Keyboards;
+use App\Services\UserState;
+use App\Services\UserDataService;
+use App\Helpers\MessageHelper;
+use Illuminate\Support\Facades\Log;
+
+class BlockUserHandler
+{
+    use MessageHelper;
+
+    public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
+    {
+        if ($messageText === 'cancel_block') {
+            UserState::setState($userId, 'updateUsers');
+            UserDataService::clearData($userId);
+            $this->deleteMessage($telegram, $chatId, $messageId);
+            $this->sendMessage($telegram, $chatId, 'Вы вернулись в меню настроек пользователей', Keyboards::userSettingsKeyboard());
+            return;
+        }
+
+        if ($messageText === 'ignore') {
+            return;
+        }
+
+        if (strpos($messageText, 'page_') === 0) {
+            $page = (int) str_replace('page_', '', $messageText);
+            $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
+
+            if ($users->isEmpty()) {
+                $this->sendMessage($telegram, $chatId, 'Нет пользователей для блокировки.', Keyboards::userSettingsKeyboard());
+                return;
+            }
+
+            $this->deleteMessage($telegram, $chatId, $messageId);
+            $this->sendMessage($telegram, $chatId, 'Выберите пользователя для блокировки:', Keyboards::userBlockKeyboard($users, $page));
+            return;
+        }
+
+        if (strpos($messageText, 'toggle_block_') === 0) {
+            $userTelegramId = (int) str_replace('toggle_block_', '', $messageText);
+            $userModel = TelegramUser::where('telegram_id', $userTelegramId)->first();
+
+            if (!$userModel) {
+                $this->sendMessage($telegram, $chatId, 'Пользователь не найден.');
+                return;
+            }
+
+            UserDataService::setData($userId, [
+                'telegram_id' => $userTelegramId,
+                'username' => $userModel->username,
+                'is_banned' => $userModel->banned,
+            ]);
+
+            $action = $userModel->banned ? 'разблокировать' : 'заблокировать';
+            $this->deleteMessage($telegram, $chatId, $messageId);
+            $this->sendMessage($telegram, $chatId, "Вы действительно хотите {$action} пользователя @{$userModel->username}?", Keyboards::confirmationKeyboard());
+            return;
+        }
+
+        if ($messageText === 'confirm_yes') {
+            $data = UserDataService::getData($userId);
+            $userTelegramId = $data['telegram_id'] ?? null;
+            $username = $data['username'] ?? null;
+            $isBanned = $data['is_banned'] ?? false;
+
+            if ($userTelegramId) {
+                $userModel = TelegramUser::where('telegram_id', $userTelegramId)->first();
+
+                if ($userModel) {
+                    if ($isBanned) {
+                        $userModel->update(['banned' => false]); 
+                        $statusMessage = "Пользователь @{$username} был разблокирован.";
+                        $userMessage = "Ваш аккаунт был разблокирован администратором.";
+                    } else {
+                        $userModel->update(['banned' => true]); // Блокируем
+                        $statusMessage = "Пользователь @{$username} был заблокирован.";
+                        $userMessage = "Ваш аккаунт был заблокирован администратором. Обратитесь к администратору для решения данной проблемы.";
+                    }
+
+                    $this->sendMessage($telegram, $userTelegramId, $userMessage);
+
+                    $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
+
+                    if ($users->isEmpty()) {
+                        $this->sendMessage($telegram, $chatId, 'Нет пользователей для блокировки.', Keyboards::userSettingsKeyboard());
+                        return;
+                    }
+
+                    $this->deleteMessage($telegram, $chatId, $messageId);
+                    $this->sendMessage($telegram, $chatId, $statusMessage, Keyboards::userBlockKeyboard($users));
+                    return;
+                }
+            }
+
+            $this->sendMessage($telegram, $chatId, 'Пользователь не найден.', Keyboards::userSettingsKeyboard());
+            return;
+        }
+
+        // Обработка отмены подтверждения
+        if ($messageText === 'confirm_no') {
+            $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
+
+            $this->deleteMessage($telegram, $chatId, $messageId);
+            $this->sendMessage($telegram, $chatId, 'Выберите пользователя для блокировки:', Keyboards::userBlockKeyboard($users));
+            return;
+        }
+
+        $usersSearch = TelegramUser::where('username', 'LIKE', $messageText . '%')->get();
+
+        if ($usersSearch->isEmpty()) {
+            $users = TelegramUser::where('telegram_id', '!=', $chatId)->get();
+
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'Схожие username пользователей не были найдены. Если вы хотите выйти из настройки, нажмите кнопку "Отменить блокировку"',
+                'reply_markup' => Keyboards::userBlockKeyboard($users)
+            ]);
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "Ищем схожие username с {$messageText}",
+                'reply_markup' => Keyboards::userBlockKeyboard($usersSearch)
+            ]);
+        }
+    }
+
+    private function deleteMessage(Api $telegram, int $chatId, ?int $messageId)
+    {
+        if ($messageId) {
+            $telegram->deleteMessage([
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+            ]);
+        }
+    }
+
+    private function sendMessage(Api $telegram, int $chatId, string $text, $replyMarkup = null)
+    {
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => $text,
+            'reply_markup' => $replyMarkup,
+        ]);
+    }
+}

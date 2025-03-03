@@ -64,7 +64,6 @@ class CreateHashtagHandler
                 // Устанавливаем состояние пользователя
                 UserState::setState($userId, 'updateHashtags');
             } catch (\Exception $e) {
-                Log::error('CreateHashtagHandler: Error creating hashtag', ['error' => $e->getMessage()]);
 
                 $telegram->sendMessage([
                     'chat_id' => $chatId,

@@ -7,7 +7,7 @@ use App\Keyboards;
 use App\Services\UserState;
 use App\Models\TelegramUser;
 use App\Handlers\UpdateHandlers\Users\EditUserHandler;
-use App\Handlers\UpdateHandlers\Users\DeleteUserHandler;
+use App\Handlers\UpdateHandlers\Users\BlockUserHandler;
 
 
 class UpdateUserHandler
@@ -26,16 +26,15 @@ class UpdateUserHandler
                 UserState::setState($userId, 'editUser');
                 break;
 
-            case 'Удалить пользователя':
-                $users = TelegramUser::all()->Where('telegram_id','!=',$userId);
-
+            case 'Заблокировать пользователя':
+                $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => 'Выберите пользователя, которого вы бы хотели удалить. Также вы можете ввести username пользователя без @, чтобы было проще найти подходящего пользователя:',
-                    'reply_markup' => Keyboards::userDeleteKeyboard($users),
+                    'text' => 'Выберите пользователя, которого вы бы хотели заблокировать. Также вы можете ввести username пользователя без @, чтобы было проще найти подходящего пользователя:',
+                    'reply_markup' => Keyboards::userBlockKeyboard($users),
                 ]);
 
-                UserState::setState($userId, 'deleteUser');
+                UserState::setState($userId, 'blockUser');
                 break;
 
             case 'Назад':
@@ -56,8 +55,8 @@ class UpdateUserHandler
                         $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
                         break;
 
-                    case 'deleteUser':
-                        $handler = new DeleteUserHandler();
+                    case 'blockUser':
+                        $handler = new BlockUserHandler();
                         $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
                         break;
 

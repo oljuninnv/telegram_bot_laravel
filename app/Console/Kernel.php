@@ -18,7 +18,6 @@ class Kernel extends ConsoleKernel
         $settings = Setting::all()->last();
 
         if (!$settings) {
-            \Log::warning('Настройки отсутствуют. Команда reports:send не будет запущена.');
             return;
         }
 

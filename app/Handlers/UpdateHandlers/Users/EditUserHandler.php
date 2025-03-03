@@ -71,7 +71,6 @@ class EditUserHandler
         if ($messageText === 'confirm_yes') {
 
             $data = UserDataService::getData($userId);
-            \Log::info($data);
             $userTelegramId = $data['telegram_id'] ?? null;
             $userRole = $data['role'] ?? null;
 
