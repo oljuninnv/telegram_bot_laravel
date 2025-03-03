@@ -5,8 +5,7 @@ namespace App\Handlers;
 use Telegram\Bot\Api;
 use App\Keyboards;
 use App\Services\UserState;
-use App\Handlers\UpdateHandlers\UpdatePeriodHandler;
-use App\Handlers\UpdateHandlers\UpdateTimeHandler;
+use App\Handlers\UpdateHandlers\UpdateUserHandler;
 use App\Handlers\UpdateHandlers\UpdateDayOfWeekHandler;
 use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
 use App\Models\Setting;
@@ -54,8 +53,9 @@ class SettingsStateHandler
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text' => 'Вы выбрали настройку пользователей',
-                    'reply_markup' => Keyboards::mainAdminKeyboard(),
+                    'reply_markup' => Keyboards::userSettingsKeyboard(),
                 ]);
+                UserState::setState($userId, 'updateUsers');
                 break;
 
             case 'Назад':
@@ -71,16 +71,6 @@ class SettingsStateHandler
                 $currentState = UserState::getState($userId);
 
                 switch ($currentState) {
-                    case 'updatePeriod':
-                        $handler = new UpdatePeriodHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
-                        break;
-
-                    case 'updateTime':
-                        $handler = new UpdateTimeHandler();
-                        $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
-                        break;
-
                     case 'updateDayOfWeek':
                         $handler = new UpdateDayOfWeekHandler();
                         $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
@@ -88,6 +78,11 @@ class SettingsStateHandler
 
                     case 'updateHashtags':
                         $handler = new UpdateHashtagsHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
+                        break;
+
+                    case 'updateUsers':
+                        $handler = new UpdateUserHandler();
                         $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
                         break;
 

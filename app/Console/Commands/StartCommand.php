@@ -7,6 +7,7 @@ use Telegram\Bot\Api;
 use App\Keyboards;
 use App\Services\UserState;
 use App\Services\SettingState;
+use App\Services\UserDataService;
 use App\Models\TelegramUser;
 use App\Enums\RoleEnum;
 use Illuminate\Support\Facades\Log;
@@ -23,8 +24,10 @@ class StartCommand extends Command
         $chatId = $message->getChat()->id;
         $userId = $message->from->id;
         $chatType = $message->getChat()->type;
+
         UserState::resetState($userId);
         SettingState::clearAll($userId);
+        UserDataService::clearData($userId);
 
         if ($chatType === 'private') {
             $user = TelegramUser::where('telegram_id', $userId)->first();

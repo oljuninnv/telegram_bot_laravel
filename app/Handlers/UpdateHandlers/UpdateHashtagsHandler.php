@@ -61,13 +61,6 @@ class UpdateHashtagsHandler
             return;
         }
 
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => "Выберите хэштег для удаления:",
-            'reply_markup' => json_encode(['remove_keyboard' => true]),
-        ]);
-
-        // Отправляем клавиатуру с хэштегами
         $this->sendMessage($telegram, $chatId, "Выберите хэштег для удаления:", Keyboards::DeleteHashTagsInlineKeyboard($hashtags));
         UserState::setState($userId, 'deleteHashtag');
     }

@@ -50,7 +50,6 @@ class DeleteHashtagHandler
 
             $this->sendMessage($telegram, $chatId, "Вы действительно хотите удалить хэштег {$hashtagModel->hashtag}?", Keyboards::confirmationKeyboard());
 
-            // Сохраняем ID хэштега в UserDataService
             UserDataService::setData($userId, ['hashtag_id' => $hashtagId]);
             return;
         }
@@ -76,13 +75,13 @@ class DeleteHashtagHandler
                     $hashtags = Hashtag::all();
 
                     if ($hashtags->isEmpty()) {
-                        // Если хэштегов больше нет, выходим из режима удаления
+                        UserDataService::clearData($userId);
                         $this->sendMessage($telegram, $chatId, 'Все хэштеги удалены. Вы вернулись в меню настроек хэштегов.', Keyboards::hashtagSettingsKeyboard());
                         UserState::setState($userId, 'updateHashtags');
                         return;
                     }
 
-                    // Показываем обновлённую клавиатуру с оставшимися хэштегами
+                    UserDataService::clearData($userId);
                     $this->sendMessage($telegram, $chatId, 'Хэштег успешно удалён! Выберите следующий хэштег для удаления:', Keyboards::DeleteHashTagsInlineKeyboard($hashtags));
                     return;
                 }
@@ -91,17 +90,16 @@ class DeleteHashtagHandler
             // Если хэштег не найден, возвращаемся в меню
             $this->sendMessage($telegram, $chatId, 'Хэштег не найден.', Keyboards::hashtagSettingsKeyboard());
             UserState::setState($userId, 'updateHashtags');
+            UserDataService::clearData($userId);
             return;
         }
 
         if ($messageText === 'confirm_no') {
-            // Удаляем сообщение с подтверждением
             $this->deleteMessage($telegram, $chatId, $messageId);
 
-            // Получаем обновлённый список хэштегов
             $hashtags = Hashtag::all();
 
-            // Показываем клавиатуру с хэштегами
+            UserDataService::clearData($userId);
             $this->sendMessage($telegram, $chatId, 'Выберите хэштег для удаления:', Keyboards::DeleteHashTagsInlineKeyboard($hashtags));
             return;
         }

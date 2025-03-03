@@ -209,20 +209,13 @@ class Keyboards
         ]);
     }
 
-    public static function userRoleChangeKeyboard($currentUserId, $page = 1, $itemsPerPage = 5)
+    public static function userRoleChangeKeyboard($users, $page = 1, $itemsPerPage = 5)
     {
-        // Получаем пользователей, исключая текущего
-        $users = TelegramUser::where('telegram_id', '!=', $currentUserId)
-            ->skip(($page - 1) * $itemsPerPage)
-            ->take($itemsPerPage)
-            ->get();
-
-        $totalUsers = TelegramUser::where('telegram_id', '!=', $currentUserId)->count();
+        $totalUsers = count($users);
         $totalPages = ceil($totalUsers / $itemsPerPage);
 
         $keyboard = Keyboard::make()->inline();
 
-        // Добавляем пользователей
         foreach ($users as $user) {
             $keyboard->row([
                 Keyboard::inlineButton([
@@ -288,14 +281,9 @@ class Keyboards
         return $keyboard;
     }
 
-    public static function userDeleteKeyboard($currentUserId, $page = 1, $itemsPerPage = 5)
+    public static function userDeleteKeyboard($users, $page = 1, $itemsPerPage = 5)
     {
-        $users = TelegramUser::where('telegram_id', '!=', $currentUserId)
-            ->skip(($page - 1) * $itemsPerPage)
-            ->take($itemsPerPage)
-            ->get();
-
-        $totalUsers = TelegramUser::where('telegram_id', '!=', $currentUserId)->count();
+        $totalUsers = count($users);
         $totalPages = ceil($totalUsers / $itemsPerPage);
 
         $keyboard = Keyboard::make()->inline();

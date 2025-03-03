@@ -14,6 +14,9 @@ use App\Handlers\UpdateHandlers\UpdatePeriodHandler;
 use App\Handlers\UpdateHandlers\UpdateTimeHandler;
 use App\Handlers\UpdateHandlers\UpdateDayOfWeekHandler;
 use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
+use App\Handlers\UpdateHandlers\UpdateUserHandler;
+use App\Handlers\UpdateHandlers\Users\EditUserHandler;
+use App\Handlers\UpdateHandlers\Users\DeleteUserHandler;
 use App\Handlers\UpdateHandlers\Hashtags\AttachHashtagHandler;
 use App\Handlers\UpdateHandlers\Hashtags\CreateHashtagHandler;
 use App\Handlers\UpdateHandlers\Hashtags\DeleteHashtagHandler;
@@ -93,6 +96,9 @@ class MessageController extends Controller
             'createHashtag' => CreateHashtagHandler::class,
             'deleteHashtag' => DeleteHashtagHandler::class,
             'attachHashtag' => AttachHashtagHandler::class,
+            'updateUsers' => UpdateUserHandler::class,
+            'editUser' => EditUserHandler::class,
+            'deleteUser' => DeleteUserHandler::class,
         ];
 
         $currentState = UserState::getState($userId);
