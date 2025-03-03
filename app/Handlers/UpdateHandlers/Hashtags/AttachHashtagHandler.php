@@ -68,10 +68,23 @@ class AttachHashtagHandler
             $this->sendMessage($telegram, $chatId, $responseText . "\nВыберите хэштег для привязки:", Keyboards::HashTagsInlineKeyboard(Hashtag::all()));
             return;
         } else {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Данный текст не является хэштегом. Если хотите выйти из настройки нажмите кнопку "Закончить настройку"',
-            ]);
+            $hashtagsSearch = Hashtag::where('hashtag', 'LIKE', $messageText . '%')->get();
+            \Log::info("Hashtag - {$hashtagsSearch->isEmpty()}");
+            if($hashtagsSearch->isEmpty()) {
+                $hashtags = Hashtag::all();
+            
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => 'Данный текст не является хэштегом или его идентификатором. Если хотите выйти из настройки, нажмите кнопку "Закончить настройку"',
+                    'reply_markup' => Keyboards::HashTagsInlineKeyboard($hashtags)
+                ]);
+            } else {
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => "Ищем схожие хэштеги с {$messageText}",
+                    'reply_markup' => Keyboards::HashTagsInlineKeyboard($hashtagsSearch)
+                ]);
+            }
             return;
         }
     }

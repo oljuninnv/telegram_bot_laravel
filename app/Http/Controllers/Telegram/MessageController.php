@@ -73,7 +73,7 @@ class MessageController extends Controller
         $user = TelegramUser::where('telegram_id', $chatId)->first();
 
         if (!$hasCommand && ($user->role !== RoleEnum::USER->value || $chatId == env('TELEGRAM_USER_ADMIN_ID'))) {
-            if($user->role !== RoleEnum::SUPER_ADMIN->value)
+            if($user->role === RoleEnum::SUPER_ADMIN->value)
             {
                 $this->handleUserState($telegram, $chatId, $userId, $messageText, $messageId);
             }

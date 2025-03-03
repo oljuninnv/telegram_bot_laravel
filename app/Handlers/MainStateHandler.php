@@ -28,6 +28,7 @@ class MainStateHandler
                     break;
 
                 case 'Настройки':
+                    \Log::info('sdbvf');
                     $this->handleReportSettings($telegram, $chatId, $userId);
                     break;
 

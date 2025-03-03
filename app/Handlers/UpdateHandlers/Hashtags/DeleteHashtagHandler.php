@@ -104,11 +104,24 @@ class DeleteHashtagHandler
             return;
         }
 
-        // Если текст не распознан, отправляем сообщение об ошибке
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => 'Данный текст не является хэштегом. Если хотите выйти из настройки, нажмите кнопку "Закончить настройку"',
-        ]);
+        $hashtagsSearch = Hashtag::where('hashtag', 'LIKE', $messageText . '%')->get();
+        \Log::info("Hashtag - {$hashtagsSearch->isEmpty()}");
+        if($hashtagsSearch->isEmpty()) {
+            $hashtags = Hashtag::all();
+        
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => 'Данный текст не является хэштегом или его идентификатором. Если хотите выйти из настройки, нажмите кнопку "Закончить настройку"',
+                'reply_markup' => Keyboards::DeleteHashTagsInlineKeyboard($hashtags)
+            ]);
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "Ищем схожие хэштеги с {$messageText}",
+                'reply_markup' => Keyboards::DeleteHashTagsInlineKeyboard($hashtagsSearch)
+            ]);
+        }
+        
     }
 
     private function deleteMessage(Api $telegram, int $chatId, ?int $messageId)
