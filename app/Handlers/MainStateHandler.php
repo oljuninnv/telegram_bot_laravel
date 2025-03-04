@@ -160,16 +160,16 @@ class MainStateHandler
             $message .= "Чат: " . $chat->name . "\n";
 
             foreach ($hashtags as $hashtag) {
-                $reportDetail = Report::where('chat_id', $chat->id)
+                $report = Report::where('chat_id', $chat->id)
                     ->where('hashtag_id', $hashtag->id)
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->first();
 
                 $message .= "Хэштег: " . $hashtag->hashtag . " - ";
 
-                if ($reportDetail) {
-                    if ($reportDetail->report->google_sheet_url) {
-                        $message .= "есть отчёт. Ссылка: " . $reportDetail->report->google_sheet_url . "\n";
+                if ($report) {
+                    if ($report->sheet_url) {
+                        $message .= "есть отчёт. Ссылка: " . $report->sheet_url . "\n";
                     } else {
                         $message .= "Ссылка отсутствует. Отчёт представлен документом в чате \n";
                     }

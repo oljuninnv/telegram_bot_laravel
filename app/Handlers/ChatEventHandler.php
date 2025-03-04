@@ -6,7 +6,9 @@ use Telegram\Bot\Api;
 use App\Models\Chat;
 use App\Models\Hashtag;
 use App\Models\Setting;
+use App\Enums\RoleEnum;
 use App\Models\Setting_Hashtag;
+use App\Models\TelegramUser;
 use Carbon\Carbon;
 use App\Services\ReportService;
 use App\Helpers\MessageHelper;
@@ -33,12 +35,24 @@ class ChatEventHandler
         if ($chatId && $userId) {
             if ($userId == env('TELEGRAM_USER_ADMIN_ID')) {
                 if (in_array($status, ['left', 'kicked'])) {
-                    $this->handleChatRemoval($chatId);
+                    Chat::where('chat_id', $chatId)->delete();
+                    Report::where('chat_id', $chatId)->delete();
                     return 'Чат удален';
                 }
 
                 if (!Chat::where('chat_id', $chatId)->exists()) {
-                    $this->handleNewChat($telegram, $chatMember, $chatId);
+                    $chatLink = $chatMember?->chat?->username ? 't.me/' . $chatMember?->chat?->username : '';
+                    Chat::create(['name' => $chatMember->chat->title, 'chat_id' => $chatId, 'chat_link' => $chatLink]);
+
+                    $hashtags = Hashtag::whereIn('id', function ($query) {
+                        $query->select('hashtag_id')->from('setting_hashtags');
+                    })->pluck('hashtag')->toArray();
+
+                    $hashtagsText = implode(' ', array_map(function ($hashtag) {
+                        return $hashtag;
+                    }, $hashtags));
+
+                    $this->sendMessage($telegram, $chatId, 'Для отправки отчётов необходимо записывать хэштеги: ' . $hashtagsText . '. Пример записи: #хэштег {ссылка на google таблицу} или прикрепите файл с отчётом с подписью #хэштег');
                     return 'Чат добавлен';
                 }
             } elseif ($status != 'left') {
@@ -47,34 +61,6 @@ class ChatEventHandler
             }
         }
 
-        $this->handleHashtagMessage($telegram, $update);
-        return null;
-    }
-
-    private function handleChatRemoval(int $chatId)
-    {
-        Chat::where('chat_id', $chatId)->delete();
-        Report::where('chat_id', $chatId)->delete();
-    }
-
-    private function handleNewChat(Api $telegram, $chatMember, int $chatId)
-    {
-        $chatLink = $chatMember?->chat?->username?'t.me/'. $chatMember?->chat?->username:'';
-        Chat::create(['name' => $chatMember->chat->title, 'chat_id' => $chatId,'chat_link' => $chatLink]);
-
-        $hashtags = Hashtag::whereIn('id', function ($query) {
-            $query->select('hashtag_id')->from('setting_hashtags');
-        })->pluck('hashtag')->toArray();
-
-        $hashtagsText = implode(' ', array_map(function ($hashtag) {
-            return $hashtag;
-        }, $hashtags));
-
-        $this->sendMessage($telegram, $chatId, 'Для отправки отчётов необходимо записывать хэштеги: ' . $hashtagsText . '. Пример записи: #хэштег {ссылка на google таблицу} или прикрепите файл с отчётом с подписью #хэштег');
-    }
-
-    private function handleHashtagMessage(Api $telegram, $update)
-    {
         $messageText = $update?->message?->text;
 
         if ($messageText && $update?->message?->entities) {
@@ -100,19 +86,17 @@ class ChatEventHandler
                     }
                 }
             }
-        }
-        else if ($update?->message?->caption && $update?->message?->caption_entities)
-        {
+        } else if ($update?->message?->caption && $update?->message?->caption_entities) {
             foreach ($update->message->caption_entities as $entity) {
                 if ($entity->type === 'hashtag') {
 
                     $hashtagText = $update->message->caption;
                     $allowedHashtagIds = Setting_Hashtag::pluck('hashtag_id')->toArray();
-                    $reportTitle = $update->message->document->file_name; 
-                    $reportTitle = strtok($reportTitle, '.'); 
+                    $reportTitle = $update->message->document->file_name;
+                    $reportTitle = strtok($reportTitle, '.');
                     $hashtag = Hashtag::where('hashtag', $hashtagText)
                         ->whereIn('id', $allowedHashtagIds)
-                        ->where('report_title',$reportTitle)
+                        ->where('report_title', $reportTitle)
                         ->first();
                     if ($hashtag) {
                         $this->handleReportSubmission($telegram, $update, $hashtag, "");
@@ -120,6 +104,7 @@ class ChatEventHandler
                 }
             }
         }
+        return null;
     }
 
     private function handleReportSubmission(Api $telegram, $update, $hashtag, $googleSheetUrl)
@@ -127,7 +112,6 @@ class ChatEventHandler
         $settings = Setting::latest()->first();
         $reportTime = $settings ? $settings->report_time : '10:00';
 
-        // Преобразуем строку в объект Carbon, если это необходимо
         $endDate = $settings
             ? Carbon::parse($settings->current_period_end_date)
             : Carbon::now()->endOfWeek()->setTimeFromTimeString($reportTime)->subSecond();
@@ -140,6 +124,16 @@ class ChatEventHandler
         $this->reportService->createReport($googleSheetUrl, $chat, $hashtag, $startDate, $endDate);
 
         $this->sendMessage($telegram, $update->message->chat->id, 'Сообщение с отчётом было отправлено - ' . $hashtag->hashtag);
-        $this->sendMessage($telegram, env('TELEGRAM_USER_ADMIN_ID'), 'В чате ' . $update->message->chat->title . " был отправлен отчёт с хэштегом " . $hashtag->hashtag);
+
+        $admins = TelegramUser::where('role', RoleEnum::SUPER_ADMIN->value)
+            ->orWhere('role', RoleEnum::ADMIN->value)
+            ->get();
+        if ($admins->isEmpty()) {
+            $this->sendMessage($telegram, env('TELEGRAM_USER_ADMIN_ID'), 'В чате ' . $update->message->chat->title . " был отправлен отчёт с хэштегом " . $hashtag->hashtag);
+        } else {
+            foreach ($admins as $admin) {
+                $this->sendMessage($telegram, $admin->telegram_id, 'В чате ' . $update->message->chat->title . " был отправлен отчёт с хэштегом " . $hashtag->hashtag);
+            }
+        }
     }
 }
