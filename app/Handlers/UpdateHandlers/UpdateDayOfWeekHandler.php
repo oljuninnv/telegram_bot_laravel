@@ -74,7 +74,7 @@ class UpdateDayOfWeekHandler
 
         $replyMarkup = null;
         if ($settingsExist) {
-            $replyMarkup = Keyboards::LeaveTheCurrentKeyboard();
+            $replyMarkup = Keyboards::getPeriodKeyboard();
         }
 
         $telegram->sendMessage([

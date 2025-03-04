@@ -117,6 +117,35 @@ class Keyboards
         return $keyboard;
     }
 
+    public static function getPeriodKeyboard(bool $settingsExist = true): Keyboard
+    {
+        $keyboard = Keyboard::make()->inline();
+
+        if ($settingsExist) {
+            $keyboard->row([
+                Keyboard::inlineButton(['text' => 'Оставить текущее', 'callback_data' => 'Оставить текущее']),
+            ]);
+        }
+
+        $keyboard
+            ->row([
+                Keyboard::inlineButton(['text' => '1', 'callback_data' => '1']),
+                Keyboard::inlineButton(['text' => '2', 'callback_data' => '2']),
+                Keyboard::inlineButton(['text' => '3', 'callback_data' => '3']),
+                Keyboard::inlineButton(['text' => '4', 'callback_data' => '4']),
+                Keyboard::inlineButton(['text' => '5', 'callback_data' => '5']),
+            ])
+            ->row([
+                Keyboard::inlineButton(['text' => '6', 'callback_data' => '6']),
+                Keyboard::inlineButton(['text' => '7', 'callback_data' => '7']),
+                Keyboard::inlineButton(['text' => '8', 'callback_data' => '8']),
+                Keyboard::inlineButton(['text' => '9', 'callback_data' => '9']),
+                Keyboard::inlineButton(['text' => '10', 'callback_data' => '10']),
+            ]);
+
+        return $keyboard;
+    }
+
     public static function leaveTheCurrentKeyboard(): Keyboard
     {
         return Keyboard::make()->inline()->row([
