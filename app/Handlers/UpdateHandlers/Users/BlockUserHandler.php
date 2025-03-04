@@ -105,7 +105,10 @@ class BlockUserHandler
         $usersSearch = TelegramUser::where('username', 'LIKE', $messageText . '%')->get();
 
         if ($usersSearch->isEmpty()) {
-            $users = TelegramUser::where('telegram_id', '!=', $chatId)->get();
+            $users = TelegramUser::where('telegram_id', '!=', $chatId)
+                ->orWhere('first_name', 'LIKE', $messageText . '%')
+                ->orWhere('last_name', 'LIKE', $messageText . '%')
+                ->get();
             $this->sendMessage($telegram, $chatId, 'Схожие username пользователей не были найдены. Если вы хотите выйти из настройки, нажмите кнопку "Отменить блокировку"', Keyboards::userBlockKeyboard($users));
         } else {
             $this->sendMessage($telegram, $chatId, "Ищем схожие username с {$messageText}", Keyboards::userBlockKeyboard($usersSearch));

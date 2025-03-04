@@ -100,7 +100,10 @@ class EditUserHandler
             return;
         }
 
-        $usersSearch = TelegramUser::where('username', 'LIKE', $messageText . '%')->get();
+        $usersSearch = TelegramUser::where('username', 'LIKE', $messageText . '%')
+            ->orWhere('first_name', 'LIKE', $messageText . '%')
+            ->orWhere('last_name', 'LIKE', $messageText . '%')
+            ->get();
 
         if ($usersSearch->isEmpty()) {
             $users = TelegramUser::where('telegram_id', '!=', $chatId)->get();

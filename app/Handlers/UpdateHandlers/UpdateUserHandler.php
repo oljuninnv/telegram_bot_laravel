@@ -19,7 +19,7 @@ class UpdateUserHandler
                 $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => 'Выберите пользователя, которому вы бы хотели изменить роль. Также вы можете ввести username пользователя без @, чтобы было проще найти подходящего пользователя:',
+                    'text' => 'Выберите пользователя, которому вы бы хотели изменить роль. Также вы можете ввести его имя, фамилию или username пользователя, чтобы было проще найти подходящего пользователя:',
                     'reply_markup' => Keyboards::userRoleChangeKeyboard($users),
                 ]);
 
@@ -30,7 +30,7 @@ class UpdateUserHandler
                 $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => 'Выберите пользователя, которого вы бы хотели заблокировать. Также вы можете ввести username пользователя без @, чтобы было проще найти подходящего пользователя:',
+                    'text' => 'Выберите пользователя, которого вы бы хотели заблокировать. Также вы можете ввести его имя, фамилию или username пользователя, чтобы было проще найти подходящего пользователя:',
                     'reply_markup' => Keyboards::userBlockKeyboard($users),
                 ]);
 

@@ -233,7 +233,7 @@ class Keyboards
             $user = $users[$i];
             $keyboard->row([
                 Keyboard::inlineButton([
-                    'text' => "{$user->username} ({$user->role})",
+                    'text' => "{$user->username} - {$user->first_name} {$user->last_name} ({$user->role})",
                     'callback_data' => "change_role_{$user->telegram_id}",
                 ]),
             ]);
@@ -279,7 +279,7 @@ class Keyboards
             $status = $user->banned ? ' (Заблокирован)' : ' (Активен)';
             $keyboard->row([
                 Keyboard::inlineButton([
-                    'text' => "{$user->username} {$status}",
+                    'text' => "{$user->username} - {$user->first_name} {$user->last_name} {$status}",
                     'callback_data' => "toggle_block_{$user->telegram_id}",
                 ]),
             ]);
