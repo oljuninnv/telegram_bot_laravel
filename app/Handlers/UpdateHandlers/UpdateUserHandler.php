@@ -8,10 +8,12 @@ use App\Services\UserState;
 use App\Models\TelegramUser;
 use App\Handlers\UpdateHandlers\Users\EditUserHandler;
 use App\Handlers\UpdateHandlers\Users\BlockUserHandler;
-
+use App\Helpers\HashtagHelper;
+use App\Models\Setting;
 
 class UpdateUserHandler
 {
+    use HashtagHelper;
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
         switch ($messageText) {
@@ -39,9 +41,19 @@ class UpdateUserHandler
 
             case 'Назад':
                 UserState::setState($userId, 'settings');
+                $settings = Setting::all()->last();
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => 'Вы вернулись в меню настроек.',
+                    'text' => "Вы вернулись в меню настроек.\n"
+                        ."Текущие настройки:\n"
+                        . "Дата окончания текущего сбора: {$settings->current_period_end_date}\n"
+                        . "День недели: {$settings->report_day}\n"
+                        . "Время: {$settings->report_time}\n"
+                        . "Период сбора: {$settings->weeks_in_period}\n"
+                        . "Все хэштеги в базе данных:\n"
+                        . $this->getAllHashtags() . "\n"
+                        . "Подключённые хэштеги:\n"
+                        . $this->getAttachedHashtags($settings) . "\n",
                     'reply_markup' => Keyboards::updateSettingsKeyboard(),
                 ]);
                 break;
