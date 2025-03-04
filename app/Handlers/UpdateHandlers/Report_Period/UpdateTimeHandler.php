@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Handlers\UpdateHandlers;
+namespace App\Handlers\UpdateHandlers\Report_Period;
 
 use Telegram\Bot\Api;
 use App\Models\Setting;

@@ -6,7 +6,7 @@ use Telegram\Bot\Api;
 use App\Keyboards;
 use App\Services\UserState;
 use App\Handlers\UpdateHandlers\UpdateUserHandler;
-use App\Handlers\UpdateHandlers\UpdateDayOfWeekHandler;
+use App\Handlers\UpdateHandlers\Report_Period\UpdateDayOfWeekHandler;
 use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
 use App\Models\Setting;
 

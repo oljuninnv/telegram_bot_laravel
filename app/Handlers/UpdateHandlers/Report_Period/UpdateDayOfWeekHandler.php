@@ -1,40 +1,47 @@
 <?php
 
-namespace App\Handlers\UpdateHandlers;
+namespace App\Handlers\UpdateHandlers\Report_Period;
 
 use Telegram\Bot\Api;
 use App\Models\Setting;
 use App\Services\UserState;
+use App\Enums\DayOfWeekEnums;
 use App\Services\SettingState;
 use App\Keyboards;
 
-class UpdatePeriodHandler
+class UpdateDayOfWeekHandler
 {
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
         $settings = Setting::latest()->first();
+        $update = $telegram->getWebhookUpdate();
+
+        if ($update->callback_query) {
+            $messageText = $update->callback_query->data;
+            $chatId = $update->callback_query->message->chat->id;
+        }
 
         if ($messageText === 'Оставить текущее') {
             if ($settings) {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
-                    'text' => 'Период остался без изменений.',
+                    'text' => 'День недели остался текущим.',
                 ]);
-                SettingState::setWeeksInPeriod($userId, $settings->weeks_in_period);
-                $this->promptForTime($telegram, $chatId, $userId);
+                SettingState::setDayOfWeek($userId, $settings->report_day);
+                $this->promptForWeeksInPeriod($telegram, $chatId, $userId);
             } else {
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text' => 'Настройки не были найдены.',
                 ]);
             }
-        } elseif (is_numeric($messageText) && (int) $messageText > 0 && (int) $messageText < 10) {
+        } elseif (DayOfWeekEnums::tryFrom($messageText)) {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => 'Период был изменён.',
+                'text' => 'День недели добавлен.',
             ]);
-            SettingState::setWeeksInPeriod($userId, $messageText);
-            $this->promptForTime($telegram, $chatId, $userId);
+            SettingState::setDayOfWeek($userId, $messageText);
+            $this->promptForWeeksInPeriod($telegram, $chatId, $userId);
         } elseif ($messageText === 'Назад') {
             if ($settings) {
                 $telegram->sendMessage([
@@ -56,24 +63,26 @@ class UpdatePeriodHandler
         } else {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => 'Пожалуйста, введите корректное количество периодов.',
+                'text' => 'Пожалуйста, выберите корректный день недели.',
             ]);
         }
     }
 
-    private function promptForTime(Api $telegram, int $chatId, int $userId)
+    private function promptForWeeksInPeriod(Api $telegram, int $chatId, int $userId)
     {
         $settingsExist = Setting::exists();
 
         $replyMarkup = null;
         if ($settingsExist) {
-            $replyMarkup = Keyboards::LeaveTheCurrentKeyboard();
+            $replyMarkup = Keyboards::getPeriodKeyboard();
         }
+
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "Введите корректное время (например, 14:00):",
+            'text' => "Введите через сколько недель будет период сбора (от 1 до 10):",
             'reply_markup' => $replyMarkup,
         ]);
-        UserState::setState($userId, 'updateTime');
+
+        UserState::setState($userId, 'updatePeriod');
     }
 }
