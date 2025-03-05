@@ -38,38 +38,56 @@ class StartCommand extends Command
                     'text' => $response,
                     'reply_markup' => json_encode(['remove_keyboard' => true]),
                 ]);
-                return; 
+                return;
             }
 
-            if (!$user) { 
-                $user = TelegramUser::create([
-                    'telegram_id' => $userId,
-                    'first_name' => $message->from->first_name,
-                    'last_name' => $message->from->last_name ?? null,
-                    'username' => $message->from->username ?? null,
-                    'role' => RoleEnum::USER->value,
-                    'banned' => false,
-                ]);
+            if (!$user) {
+                if ($userId == env('TELEGRAM_USER_ADMIN_ID')) {
+                    $user = TelegramUser::create([
+                        'telegram_id' => $userId,
+                        'first_name' => $message->from->first_name,
+                        'last_name' => $message->from->last_name ?? null,
+                        'username' => $message->from->username ?? null,
+                        'role' => RoleEnum::SUPER_ADMIN->value,
+                        'banned' => false,
+                    ]);
 
-                $adminMessage = "Новый пользователь:\n"
-                    . "Имя: {$user->first_name}\n"
-                    . "Фамилия: {$user->last_name}\n"
-                    . "Username: @{$user->username}";
-
-                $admins = TelegramUser::where('role', RoleEnum::SUPER_ADMIN->value)->get();
-                foreach ($admins as $admin) {
+                    $response = "Добрый день, рад вас видеть!";
                     $telegram->sendMessage([
-                        'chat_id' => $admin->telegram_id,
-                        'text' => $adminMessage,
+                        'chat_id' => $chatId,
+                        'text' => $response,
+                        'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
+                    ]);
+                } else {
+                    $user = TelegramUser::create([
+                        'telegram_id' => $userId,
+                        'first_name' => $message->from->first_name,
+                        'last_name' => $message->from->last_name ?? null,
+                        'username' => $message->from->username ?? null,
+                        'role' => RoleEnum::USER->value,
+                        'banned' => false,
+                    ]);
+
+                    $adminMessage = "Новый пользователь:\n"
+                        . "Имя: {$user->first_name}\n"
+                        . "Фамилия: {$user->last_name}\n"
+                        . "Username: @{$user->username}";
+
+                    $admins = TelegramUser::where('role', RoleEnum::SUPER_ADMIN->value)->get();
+                    foreach ($admins as $admin) {
+                        $telegram->sendMessage([
+                            'chat_id' => $admin->telegram_id,
+                            'text' => $adminMessage,
+                        ]);
+                    }
+
+                    $response = "Добро пожаловать! Вы зарегистрированы как обычный пользователь. Если вам нужен доступ к функционалу бота, свяжитесь с администратором.";
+                    $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => $response,
+                        'reply_markup' => json_encode(['remove_keyboard' => true]),
                     ]);
                 }
-
-                $response = "Добро пожаловать! Вы зарегистрированы как обычный пользователь. Если вам нужен доступ к функционалу бота, свяжитесь с администратором.";
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => $response,
-                    'reply_markup' => json_encode(['remove_keyboard' => true]),
-                ]);
             } else {
                 if ($user->role != RoleEnum::USER->value) {
                     if ($user->role == RoleEnum::SUPER_ADMIN->value) {

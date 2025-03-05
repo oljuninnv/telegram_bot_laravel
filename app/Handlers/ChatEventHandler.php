@@ -33,7 +33,8 @@ class ChatEventHandler
         $userId = $chatMember?->from?->id;
 
         if ($chatId && $userId) {
-            if ($userId == env('TELEGRAM_USER_ADMIN_ID')) {
+            $user = TelegramUser::where('telegram_id', $userId)->first();
+            if ($user && $user->role != RoleEnum::USER->value && !$user->banned) {
                 if (in_array($status, ['left', 'kicked'])) {
                     Chat::where('chat_id', $chatId)->delete();
                     Report::where('chat_id', $chatId)->delete();
