@@ -22,6 +22,9 @@ class StartCommand extends Command
         $message = $this->getUpdate()->getMessage();
         $chatId = $message->getChat()->id;
         $userId = $message->from->id;
+        $username = $message->from->username;
+        $firstName = $message->from?->first_name;
+        $lastName = $message->from?->last_name;
         $chatType = $message->getChat()->type;
 
         UserState::resetState($userId);
@@ -42,6 +45,32 @@ class StartCommand extends Command
             }
 
             if (!$user) {
+                $user = TelegramUser::where('username', $username)->first();
+                if ($user) {
+                    $user->update(['telegram_id' => $chatId, 'first_name' => $firstName, 'last_name' => $lastName]);
+                    if ($user->role === RoleEnum::SUPER_ADMIN->value) {
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => 'Добрый день, рад вас видеть!',
+                            'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
+                        ]);
+                        return;
+                    } else if ($user->role === RoleEnum::ADMIN->value) {
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => 'Добрый день, рад вас видеть!',
+                            'reply_markup' => Keyboards::mainAdminKeyboard(),
+                        ]);
+                        return;
+                    } else {
+                        $response = "Добрый день. Вы не являетесь администратором, поэтому функционал бота вам не доступен. Свяжитесь с администратором, чтобы поменять роль.";
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => $response,
+                        ]);
+                    }
+
+                }
                 if ($userId == env('TELEGRAM_USER_ADMIN_ID')) {
                     $user = TelegramUser::create([
                         'telegram_id' => $userId,

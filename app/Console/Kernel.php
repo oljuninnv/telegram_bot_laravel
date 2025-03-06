@@ -15,6 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('delete_ban_user:send')->hourly();
+
         $settings = Setting::all()->last();
 
         if (!$settings) {
@@ -24,8 +26,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('reports:send')
             ->when(function () use ($settings) {
                 return Carbon::now()->greaterThanOrEqualTo($settings->current_period_end_date);
-            })->hourly();
-
+            })->hourly();        
     }
     /**
      * Register the commands for the application.

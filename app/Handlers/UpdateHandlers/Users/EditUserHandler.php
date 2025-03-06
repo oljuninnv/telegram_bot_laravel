@@ -85,8 +85,8 @@ class EditUserHandler
             }
 
             UserDataService::clearData($userId);
-            $this->sendMessage($telegram, $chatId, 'Пользователь не найден.', Keyboards::hashtagSettingsKeyboard());
-            UserState::setState($userId, 'updateHashtags');
+            $this->sendMessage($telegram, $chatId, 'Пользователь не найден.', Keyboards::userSettingsKeyboard());
+            UserState::setState($userId, 'updateUsers');
             return;
         }
 

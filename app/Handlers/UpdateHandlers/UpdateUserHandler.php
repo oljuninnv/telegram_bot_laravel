@@ -6,6 +6,7 @@ use Telegram\Bot\Api;
 use App\Keyboards;
 use App\Services\UserState;
 use App\Models\TelegramUser;
+use App\Handlers\UpdateHandlers\Users\AddUserHandler;
 use App\Handlers\UpdateHandlers\Users\EditUserHandler;
 use App\Handlers\UpdateHandlers\Users\BlockUserHandler;
 use App\Helpers\HashtagHelper;
@@ -17,6 +18,16 @@ class UpdateUserHandler
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText, ?int $messageId = null)
     {
         switch ($messageText) {
+            case 'Добавить пользователя':
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => 'Введите username пользователя, которого вы хотите добавить ',
+                    'reply_markup' => Keyboards::backAdminKeyboard(),
+                ]);
+
+                UserState::setState($userId, 'addUser');
+                break;
+
             case 'Редактировать пользователя':
                 $users = TelegramUser::where('telegram_id', '!=', $userId)->get();
                 $telegram->sendMessage([
@@ -62,6 +73,10 @@ class UpdateUserHandler
                 $currentState = UserState::getState($userId);
 
                 switch ($currentState) {
+                    case 'addUser':
+                        $handler = new AddUserHandler();
+                        $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
+                        break;
                     case 'editUser':
                         $handler = new EditUserHandler();
                         $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);

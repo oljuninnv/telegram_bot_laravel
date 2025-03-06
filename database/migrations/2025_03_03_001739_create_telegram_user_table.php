@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('telegram_user', function (Blueprint $table) {
             $table->id(); // Автоинкрементный первичный ключ
             $table->bigInteger('telegram_id')->unique()->nullable();
-            $table->string('first_name');
+            $table->string('first_name')->nullable();
             $table->string('last_name')->nullable(); 
             $table->string('username')->nullable(); 
             $table->timestamps(); 

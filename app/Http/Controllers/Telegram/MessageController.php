@@ -15,6 +15,7 @@ use App\Handlers\UpdateHandlers\Report_Period\UpdateTimeHandler;
 use App\Handlers\UpdateHandlers\Report_Period\UpdateDayOfWeekHandler;
 use App\Handlers\UpdateHandlers\UpdateHashtagsHandler;
 use App\Handlers\UpdateHandlers\UpdateUserHandler;
+use App\Handlers\UpdateHandlers\Users\AddUserHandler;
 use App\Handlers\UpdateHandlers\Users\EditUserHandler;
 use App\Handlers\UpdateHandlers\Users\BlockUserHandler;
 use App\Handlers\UpdateHandlers\Hashtags\AttachHashtagHandler;
@@ -110,6 +111,7 @@ class MessageController extends Controller
             'deleteHashtag' => DeleteHashtagHandler::class,
             'attachHashtag' => AttachHashtagHandler::class,
             'updateUsers' => UpdateUserHandler::class,
+            'addUser' => AddUserHandler::class,
             'editUser' => EditUserHandler::class,
             'blockUser' => BlockUserHandler::class,
         ];
