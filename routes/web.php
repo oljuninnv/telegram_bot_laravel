@@ -16,6 +16,6 @@ use App\Http\Controllers\Telegram\MessageController;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 Route::post('/telegram-webhook', [MessageController::class, '__invoke']); //запуск команды

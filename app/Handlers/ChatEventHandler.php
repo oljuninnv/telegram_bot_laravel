@@ -78,10 +78,11 @@ class ChatEventHandler
                     $googleSheetUrl = $parts[1];
 
                     $allowedHashtagIds = Setting_Hashtag::pluck('hashtag_id')->toArray();
+                    
                     $hashtag = Hashtag::where('hashtag', $hashtagText)
                         ->whereIn('id', $allowedHashtagIds)
                         ->first();
-
+                        
                     if ($hashtag) {
                         $this->handleReportSubmission($telegram, $update, $hashtag, $googleSheetUrl);
                     }

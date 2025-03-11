@@ -11,6 +11,12 @@ use MoonShine\Laravel\DependencyInjection\MoonShine;
 use MoonShine\Laravel\DependencyInjection\MoonShineConfigurator;
 use App\MoonShine\Resources\MoonShineUserResource;
 use App\MoonShine\Resources\MoonShineUserRoleResource;
+use App\MoonShine\Resources\SettingsResource;
+use App\MoonShine\Resources\HashtagsResource;
+use App\MoonShine\Resources\HashtagSettingResource;
+use App\MoonShine\Resources\ChatResource;
+use App\MoonShine\Resources\ReportResource;
+use App\MoonShine\Resources\ReportsResource;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -21,12 +27,16 @@ class MoonShineServiceProvider extends ServiceProvider
      */
     public function boot(CoreContract $core, ConfiguratorContract $config): void
     {
-        // $config->authEnable();
+        $config->authEnable();
 
         $core
             ->resources([
                 MoonShineUserResource::class,
                 MoonShineUserRoleResource::class,
+                SettingsResource::class,
+                HashtagsResource::class,
+                ChatResource::class,
+                ReportResource::class,
             ])
             ->pages([
                 ...$config->getPages(),

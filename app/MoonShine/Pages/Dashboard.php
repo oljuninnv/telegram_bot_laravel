@@ -6,6 +6,7 @@ namespace App\MoonShine\Pages;
 
 use MoonShine\Laravel\Pages\Page;
 use MoonShine\Contracts\UI\ComponentContract;
+use MoonShine\UI\Components\ActionButton;
 #[\MoonShine\MenuManager\Attributes\SkipMenu]
 
 class Dashboard extends Page
@@ -29,7 +30,10 @@ class Dashboard extends Page
      * @return list<ComponentContract>
      */
     protected function components(): iterable
-	{
-		return [];
-	}
+    {
+        return [
+            ActionButton::make('Отчет Менеджер-Клиент')
+                ->onClick(fn() => "alert('Пример')", 'prevent')
+        ];
+    }
 }

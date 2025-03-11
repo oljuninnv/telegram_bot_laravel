@@ -23,4 +23,9 @@ class Setting extends Model
     {
         return $this->hasMany(Setting_Hashtag::class);
     }
+
+    public function hashtags()
+    {
+        return $this->belongsToMany(Hashtag::class, 'setting_hashtags', 'setting_id', 'hashtag_id');
+    }
 }
