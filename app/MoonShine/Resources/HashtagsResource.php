@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Hashtag;
 use MoonShine\UI\Fields\Text;
 use MoonShine\Laravel\Resources\ModelResource;
@@ -12,8 +11,7 @@ use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\ID;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Contracts\UI\ComponentContract;
-use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+
 
 /**
  * @extends ModelResource<Hashtag>
@@ -24,7 +22,7 @@ class HashtagsResource extends ModelResource
 
     protected string $title = 'Хэштеги';
 
-    protected array $with = ['Setting_Hashtag','Setting'];
+    protected array $with = ['Setting_Hashtag'];
 
     protected bool $simplePaginate = true;
 

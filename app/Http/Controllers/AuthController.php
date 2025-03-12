@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    public function guard()
+    {
+        return Auth::guard('admins');
+    }
     public function showLoginForm()
     {
         return view('auth.login');
@@ -19,7 +23,7 @@ class AuthController extends Controller
     {
         $values = $request->all();
 
-        if (Auth::attempt(['email' => $values['email'], 'password' => $values['password']])) {
+        if ($this->guard()->attempt(['email' => $values['email'], 'password' => $values['password']])) {
             \Log::info('Привязан');
             return response("Привязан");
         }
@@ -40,13 +44,11 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = MoonshineUser::create([
+        MoonshineUser::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
-
-        Auth::login($user);
 
         return redirect('/');
     }

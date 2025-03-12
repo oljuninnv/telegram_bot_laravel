@@ -4,14 +4,8 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Setting;
-use App\Models\Hashtag;
 use App\Models\Setting_Hashtag;
-use MoonShine\Laravel\Fields\Relationships\HasMany;
-use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use MoonShine\ActionButtons\ActionButton;
-use MoonShine\Buttons\CreateButton;
 use App\Enums\DayOfWeekEnums;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\UI\Components\Layout\Box;
@@ -24,9 +18,8 @@ use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsToMany;
 use MoonShine\Support\ListOf;
 use MoonShine\Laravel\Enums\Action;
-use MoonShine\Support\Enums\Color;
 use MoonShine\UI\Fields\Select;
-use Illuminate\Http\Request;
+
 
 /**
  * @extends ModelResource<Setting>

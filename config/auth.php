@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'admins' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
     ],
 
     /*
@@ -60,14 +64,14 @@ return [
     */
 
     'providers' => [
-        'users' => [
+        'admins' => [
             'driver' => 'eloquent',
             'model' => MoonShine\Laravel\Models\MoonshineUser::class,
         ],
 
         // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'App\Models\User::class',
+        //     'driver' => 'eloquent',
+        //     'model' => App\Models\User::class,
         // ],
     ],
 
@@ -97,19 +101,13 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+        'moonshine_users' => [
+            'provider' => 'moonshine_users',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Password Confirmation Timeout
-    |--------------------------------------------------------------------------
-    |
-    | Here you may define the amount of seconds before a password confirmation
-    | times out and the user is prompted to re-enter their password via the
-    | confirmation screen. By default, the timeout lasts for three hours.
-    |
-    */
-
     'password_timeout' => 10800,
-
 ];
