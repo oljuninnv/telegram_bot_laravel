@@ -101,11 +101,17 @@ class SendReports extends Command
 
         $sheetName = $startDate->format('d.m.Y H:i') . ' - ' . $currentPeriodEndDate->format('d.m.Y H:i');
 
-        // Создаем новый лист
-        $this->createGoogleSheet($service, $spreadsheetId, $sheetName);
+        // Проверяем, существует ли лист с таким названием
+        $sheetExists = $this->checkIfSheetExists($service, $spreadsheetId, $sheetName);
+        if ($sheetExists) {
+            $this->clearSheet($service, $spreadsheetId, $sheetName);
+            $this->fillGoogleSheet($service, $spreadsheetId, $sheetName, $googleSheetData);
+        } else {
+            $this->createGoogleSheet($service, $spreadsheetId, $sheetName);
+            $this->fillGoogleSheet($service, $spreadsheetId, $sheetName, $googleSheetData);
+        }
 
-        // Заполняем лист данными
-        $this->fillGoogleSheet($service, $spreadsheetId, $sheetName, $googleSheetData);
+        $this->updatePeriodEndDate($settings, $currentPeriodEndDate, $weeksInPeriod, $reportDay, $reportTime);
 
         $spreadsheetUrl = "https://docs.google.com/spreadsheets/d/{$spreadsheetId}/edit#gid=0";
         $users = TelegramUser::all()->where('role', '!=', RoleEnum::USER->value);
@@ -115,9 +121,6 @@ class SendReports extends Command
                 'text' => "Ссылка на Google таблицу: {$spreadsheetUrl}",
             ]);
         }
-
-        // Обновляем current_period_end_date
-        $this->updatePeriodEndDate($settings, $currentPeriodEndDate, $weeksInPeriod, $reportDay, $reportTime);
 
         $this->info('Отчёт успешно отправлен.');
     }

@@ -105,28 +105,4 @@ class CreateManagerClientReport
             return 'Отчёт успешно создан и отправлен.';
         }
     }
-
-    /**
-     * Проверяет, существует ли лист с указанным названием.
-     */
-    protected function checkIfSheetExists(Sheets $service, string $spreadsheetId, string $sheetName): bool
-    {
-        $spreadsheet = $service->spreadsheets->get($spreadsheetId);
-        foreach ($spreadsheet->getSheets() as $sheet) {
-            if ($sheet->getProperties()->getTitle() === $sheetName) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Очищает данные на листе.
-     */
-    protected function clearSheet(Sheets $service, string $spreadsheetId, string $sheetName): void
-    {
-        $range = $sheetName . '!A1:Z1000'; // Очищаем весь лист
-        $clearRequest = new ClearValuesRequest();
-        $service->spreadsheets_values->clear($spreadsheetId, $range, $clearRequest);
-    }
 }
