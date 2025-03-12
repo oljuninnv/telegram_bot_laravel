@@ -59,6 +59,7 @@ final class MoonShineLayout extends AppLayout
             ]),
             MenuItem::make('Чаты', ChatResource::class),
             MenuItem::make('Отчёты', ReportResource::class),
+            MenuItem::make('Сайт', static fn () => route('home')),
         ];
     }
 

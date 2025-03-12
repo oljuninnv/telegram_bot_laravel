@@ -14,28 +14,14 @@
             <x-moonshine::layout.top-bar :home_route="route('home')">
                 <x-moonshine::layout.logo href="/" logo="{{ asset('logo-small.svg') }}" />
                 <x-moonshine::layout.menu/>
-
-                @auth
-                    <x-moonshine::layout.profile
-                        route="/profile"
-                        :log-out-route="route('web.logout')"
-                        :avatar="auth()->user()?->avatar ?? ''"
-                        :name-of-user="auth()->user()->name ?? ''"
-                    />
-                @elseguest
-                    {{-- <x-moonshine::link-button :href="route('login')" class="btn-primary"> --}}
-                    <x-moonshine::link-button :href="route('home')" class="btn-primary">
-                        Войти
-                    </x-moonshine::link-button>
-                @endauth
-
+                <x-moonshine::link-button href="{{env('APP_URL')}}/admin/login" class="btn-primary">
+                    Войти
+                </x-moonshine::link-button>
             </x-moonshine::layout.top-bar>
             <x-moonshine::layout.wrapper>
-                <x-moonshine::layout.div class="layout-page">
-                    <x-moonshine::layout.content>
-                        @yield('content')
-                    </x-moonshine::layout.content>
-                </x-moonshine::layout.div>
+                <x-moonshine::layout.content>
+                    {{-- Если хотите добавлять какой-нибудь контент --}}
+                </x-moonshine::layout.content>
             </x-moonshine::layout.wrapper>
         </x-moonshine::layout.body>
     </x-moonshine::layout.html>
