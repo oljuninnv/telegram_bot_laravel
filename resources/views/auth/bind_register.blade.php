@@ -11,20 +11,15 @@
             </x-moonshine::layout.assets>
         </x-moonshine::layout.head>
         <x-moonshine::layout.body>
-            <x-moonshine::layout.top-bar :home_route="route('home')">
-                <x-moonshine::layout.logo href="/" logo="{{ asset('logo-small.svg') }}" />
-                <x-moonshine::layout.menu/>
-                <x-moonshine::link-button href="{{ route('login') }}" class="btn-primary">
-                    Войти
-                </x-moonshine::link-button>
-            </x-moonshine::layout.top-bar>
             <x-moonshine::layout.wrapper>
                 <x-moonshine::layout.div class="layout-page">
                     <div class="container mx-auto px-4 py-8">
                         <div class="max-w-md mx-auto bg-white shadow-lg rounded-lg p-6">
                             <h2 class="text-2xl font-bold mb-6 text-center">Регистрация</h2>
-                            <form method="POST" action="{{ route('register') }}">
+                            <form method="POST" action="{{ route('bind_register') }}">
                                 @csrf
+                                <input type="hidden" name="user_id" value="{{ request()->query('user_id') }}">
+                                <input type="hidden" name="chat_id" value="{{ request()->query('chat_id') }}">
                                 <div class="mb-4">
                                     <label for="name" class="block text-sm font-medium text-gray-700">Имя</label>
                                     <input id="name" type="text" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus

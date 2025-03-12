@@ -10,6 +10,7 @@ use App\Services\SettingState;
 use App\Services\UserDataService;
 use App\Models\TelegramUser;
 use App\Enums\RoleEnum;
+use MoonShine\Laravel\Models\MoonshineUser;
 
 class StartCommand extends Command
 {
@@ -48,101 +49,57 @@ class StartCommand extends Command
                 $user = TelegramUser::where('username', $username)->first();
                 if ($user) {
                     $user->update(['telegram_id' => $chatId, 'first_name' => $firstName, 'last_name' => $lastName]);
-                    if ($user->role === RoleEnum::SUPER_ADMIN->value) {
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => 'Добрый день, рад вас видеть!',
-                            'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
-                        ]);
-                        return;
-                    } else if ($user->role === RoleEnum::ADMIN->value) {
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => 'Добрый день, рад вас видеть!',
-                            'reply_markup' => Keyboards::mainAdminKeyboard(),
-                        ]);
-                        return;
-                    } else {
-                        $response = "Добрый день. Вы не являетесь администратором, поэтому функционал бота вам не доступен. Свяжитесь с администратором, чтобы поменять роль.";
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => $response,
-                        ]);
-                    }
-
-                }
-                if ($userId == env('TELEGRAM_USER_ADMIN_ID')) {
+                } else {
                     $user = TelegramUser::create([
                         'telegram_id' => $userId,
-                        'first_name' => $message->from->first_name,
-                        'last_name' => $message->from->last_name ?? null,
-                        'username' => $message->from->username ?? null,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName ?? null,
+                        'username' => $username ?? null,
                         'role' => RoleEnum::SUPER_ADMIN->value,
                         'banned' => false,
                     ]);
-
-                    $response = "Добрый день, рад вас видеть!";
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => $response,
-                        'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
-                    ]);
-                } else {
-                    $user = TelegramUser::create([
-                        'telegram_id' => $userId,
-                        'first_name' => $message->from->first_name,
-                        'last_name' => $message->from->last_name ?? null,
-                        'username' => $message->from->username ?? null,
-                        'role' => RoleEnum::USER->value,
-                        'banned' => false,
-                    ]);
-
-                    $adminMessage = "Новый пользователь:\n"
-                        . "Имя: {$user->first_name}\n"
-                        . "Фамилия: {$user->last_name}\n"
-                        . "Username: @{$user->username}";
-
-                    $admins = TelegramUser::where('role', RoleEnum::SUPER_ADMIN->value)->get();
-                    foreach ($admins as $admin) {
-                        $telegram->sendMessage([
-                            'chat_id' => $admin->telegram_id,
-                            'text' => $adminMessage,
-                        ]);
-                    }
-
-                    $response = "Добро пожаловать! Вы зарегистрированы как обычный пользователь. Если вам нужен доступ к функционалу бота, свяжитесь с администратором.";
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => $response,
-                        'reply_markup' => json_encode(['remove_keyboard' => true]),
-                    ]);
-                }
-            } else {
-                if ($user->role != RoleEnum::USER->value) {
-                    if ($user->role == RoleEnum::SUPER_ADMIN->value) {
-                        $response = "Добрый день, рад вас видеть!";
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => $response,
-                            'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
-                        ]);
-                    } else {
-                        $response = "Добрый день, рад вас видеть!";
-                        $telegram->sendMessage([
-                            'chat_id' => $chatId,
-                            'text' => $response,
-                            'reply_markup' => Keyboards::mainAdminKeyboard(),
-                        ]);
-                    }
-                } else {
-                    $response = "Добрый день. Вы не являетесь администратором, поэтому функционал бота вам не доступен. Свяжитесь с администратором, чтобы поменять роль.";
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => $response,
-                        'reply_markup' => json_encode(['remove_keyboard' => true]),
-                    ]);
                 }
             }
-        }
+            if ($user->role === RoleEnum::SUPER_ADMIN->value) {
+                $moonshineUser = MoonshineUser::where('telegram_user_id', $user->id)->first();
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => 'Добрый день, рад вас видеть!',
+                    'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
+                ]);
+                if (!$moonshineUser) {
+                    $response = "Вы можете привязать свой аккаунт к админ-панели.";
+                    $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => $response,
+                        'reply_markup' => json_encode([
+                            'inline_keyboard' => [
+                                [
+                                    [
+                                        'text' => 'Привязать аккаунт',
+                                        'url' => env('WebHook_Url') . '/bind_account?user_id=' . $user->id . '&chat_id=' . $userId
+                                    ]
+                                ]
+                            ],
+                        ]),
+                    ]);
+                }
+            } else if ($user->role === RoleEnum::ADMIN->value) {
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => 'Добрый день, рад вас видеть!',
+                    'reply_markup' => Keyboards::mainAdminKeyboard(),
+                ]);
+                return;
+            }
+            else {
+                $response = "Добрый день. Вы не являетесь администратором, поэтому функционал бота вам не доступен. Свяжитесь с администратором, чтобы поменять роль.";
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => $response,
+                    'reply_markup' => json_encode(['remove_keyboard' => true]),
+                ]);
+            }
+        } 
     }
 }

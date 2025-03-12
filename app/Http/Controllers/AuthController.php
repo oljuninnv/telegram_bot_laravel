@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use MoonShine\Laravel\Models\MoonshineUser;
-use MoonShine\Laravel\Models\MoonshineUserRole;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Telegram\Bot\Api;
 
 class AuthController extends Controller
 {
@@ -14,42 +14,66 @@ class AuthController extends Controller
     {
         return Auth::guard('admins');
     }
-    public function showLoginForm()
+
+    public function showBindRegistrationForm()
     {
-        return view('auth.login');
+        return view('auth.bind_register');
     }
 
-    public function login(Request $request)
-    {
-        $values = $request->all();
-
-        if ($this->guard()->attempt(['email' => $values['email'], 'password' => $values['password']])) {
-            \Log::info('Привязан');
-            return response("Привязан");
-        }
-
-        return response("Не привязан.", 401);
-    }
-
-    public function showRegistrationForm()
-    {
-        return view('auth.register');
-    }
-
-    public function register(Request $request)
+    public function bindRegister(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:moonshine_users',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        MoonshineUser::create([
+        $moonshineUser = MoonshineUser::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'telegram_user_id' => $request->user_id,
         ]);
 
-        return redirect('/');
+        $telegram = new Api(config('telegram.bot_token'));
+        $telegram->sendMessage([
+            'chat_id' => $request->chat_id,
+            'text' => "Ваш аккаунт успешно привязан! Перейдите в админ-панель: " . env('WEBHOOK_URL'),
+        ]);
+
+        return redirect('/account-bound');
+    }
+
+    public function showBindAccountForm()
+    {
+        return view('auth.bind-account');
+    }
+
+    public function bindAccount(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email|max:255',
+            'password' => 'required|string|min:8',
+        ]);
+
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::guard('admins')->attempt($credentials)) {
+            $moonshineUser = MoonshineUser::where('email', $request->email)->first();
+            $moonshineUser->telegram_user_id = $request->user_id;
+            $moonshineUser->save();
+            
+            $telegram = new Api(config('telegram.bot_token'));
+            $telegram->sendMessage([
+                'chat_id' => $request->chat_id,
+                'text' => "Ваш аккаунт успешно привязан! Перейдите в админ-панель: " . env('WEBHOOK_URL'),
+            ]);
+
+            return redirect('/account-bound');
+        }
+
+        return back()->withErrors([
+            'error' => 'Неверные учетные данные. Пожалуйста, проверьте введенные данные и попробуйте снова.',
+        ]);
     }
 }

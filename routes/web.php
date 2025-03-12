@@ -19,9 +19,14 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
+Route::get('/bind_register', [AuthController::class, 'showBindRegistrationForm'])->name('bind_register');
+Route::post('/bind_register', [AuthController::class, 'bindRegister']);
+
+Route::get('/bind_account', [AuthController::class, 'showBindAccountForm'])->name('bind_account');
+Route::post('/bind_account', [AuthController::class, 'bindAccount']);
+
+Route::get('/account-bound', function () {
+    return view('auth.account-bound');
+})->name('account-bound');
 
 Route::post('/telegram-webhook', [MessageController::class, '__invoke']); //запуск команды
