@@ -32,7 +32,7 @@ class AuthController extends Controller
         $chatId = $request->input('chat_id');
         $messageId = $request->input('message_id');
 
-        $moonshineUser = MoonshineUser::create([
+        MoonshineUser::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -41,12 +41,6 @@ class AuthController extends Controller
         
         $telegram = new Api(config('telegram.bot_token'));
         $telegram->editMessageText([
-            'chat_id' => $chatId,
-            'message_id' => $messageId,
-            'text' => 'Ваш аккаунт успешно привязан! Перейдите в админ-панель: ' . env('WEBHOOK_URL'),
-        ]);
-
-        $telegram->pinChatMessage([
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'text' => 'Ваш аккаунт успешно привязан! Перейдите в админ-панель: ' . env('WEBHOOK_URL'),
@@ -82,12 +76,6 @@ class AuthController extends Controller
 
             $telegram = new Api(config('telegram.bot_token'));
             $telegram->editMessageText([
-                'chat_id' => $chatId,
-                'message_id' => $messageId,
-                'text' => 'Ваш аккаунт успешно привязан! Перейдите в админ-панель: ' . env('WEBHOOK_URL'),
-            ]);
-
-            $telegram->pinChatMessage([
                 'chat_id' => $chatId,
                 'message_id' => $messageId,
                 'text' => 'Ваш аккаунт успешно привязан! Перейдите в админ-панель: ' . env('WEBHOOK_URL'),

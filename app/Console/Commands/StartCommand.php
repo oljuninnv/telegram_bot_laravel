@@ -88,6 +88,20 @@ class StartCommand extends Command
                         'chat_id' => $chatId,
                         'message_id' => $messageId,
                     ]);
+                }else {
+                    $response = "Ссылка на админ-панель: " . env('WEBHOOK_URL');
+                
+                    $sentMessage = $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => $response,
+                    ]);
+                
+                    $messageId = $sentMessage->getMessageId();
+                
+                    $telegram->pinChatMessage([
+                        'chat_id' => $chatId,
+                        'message_id' => $messageId,
+                    ]);
                 }
             } else if ($user->role === RoleEnum::ADMIN->value) {
                 $telegram->sendMessage([
