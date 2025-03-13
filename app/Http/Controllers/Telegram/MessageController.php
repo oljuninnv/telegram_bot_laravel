@@ -41,10 +41,12 @@ class MessageController extends Controller
 
         if ($update?->myChatMember?->chat?->type && $update?->myChatMember?->chat?->type != 'private') {
             $chatResponse = $this->chatEventHandler->handle($telegram, $update);
+            unset($update, $telegram);
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
 
         if (!$update->message && !$update->callback_query) {
+            unset($update, $telegram);
             return response(null, 200);
         }
 
@@ -56,6 +58,7 @@ class MessageController extends Controller
 
         if ($chatType !== 'private') {
             $chatResponse = $this->chatEventHandler->handle($telegram, $update);
+            unset($update, $telegram);
             return $chatResponse ? response($chatResponse, 200) : response(null, 200);
         }
 
@@ -71,7 +74,7 @@ class MessageController extends Controller
             }
         }
 
-        $user = TelegramUser::where('telegram_id', $chatId)->first();
+        $user = TelegramUser::where('telegram_id', $chatId)->first(['telegram_id', 'banned', 'role']);
 
         if (!$hasCommand && !$user->banned && ($user->role !== RoleEnum::USER->value)) {
             if ($messageText) {
@@ -94,8 +97,7 @@ class MessageController extends Controller
             ]);
         }
 
-         // Очистка памяти
-         unset($update, $telegram, $user);
+        unset($update, $telegram, $user);
 
         return response(null, 200);
     }
@@ -123,6 +125,8 @@ class MessageController extends Controller
             $handler = new $handlers[$currentState]();
             $handler->handle($telegram, $chatId, $userId, $messageText, $messageId);
         }
+
+        unset($handlers, $currentState, $handler);
 
         return response(null, 200);
     }
