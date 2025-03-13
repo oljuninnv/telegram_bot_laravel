@@ -35,6 +35,8 @@ class MoonShineUserRoleResource extends ModelResource
 
     protected bool $cursorPaginate = true;
 
+    protected int $itemsPerPage = 10;
+
     public function getTitle(): string
     {
         return __('moonshine::ui.resource.role');

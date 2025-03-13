@@ -41,11 +41,15 @@ class MoonShineUserResource extends ModelResource
 
     protected string $column = 'name';
 
-    protected array $with = ['moonshineUserRole'];
+    protected array $with = ['moonshineUserRole','TelegramUser'];
 
     protected bool $simplePaginate = true;
 
     protected bool $columnSelection = true;
+
+    protected int $itemsPerPage = 10;
+
+    protected bool $cursorPaginate = true;
 
     public function getTitle(): string
     {
@@ -81,6 +85,8 @@ class MoonShineUserResource extends ModelResource
 
             Email::make(__('moonshine::ui.resource.email'), 'email')
                 ->sortable(),
+
+            Text::make("Telegram-username", 'telegramUser.username')->sortable(),
         ];
     }
 

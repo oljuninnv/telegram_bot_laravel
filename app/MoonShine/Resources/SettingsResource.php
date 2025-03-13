@@ -30,13 +30,13 @@ class SettingsResource extends ModelResource
 
     protected string $title = 'Настройки';
     protected array $with = ['Setting_Hashtag'];
-
     protected bool $simplePaginate = true;
     protected bool $columnSelection = true;
     protected bool $createInModal = true;
     protected bool $detailInModal = true;
     protected bool $editInModal = true;
     protected bool $cursorPaginate = true;
+    protected int $itemsPerPage = 10;
 
     /**
      * @return list<FieldContract>

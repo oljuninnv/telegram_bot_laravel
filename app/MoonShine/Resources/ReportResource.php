@@ -13,6 +13,8 @@ use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Support\ListOf;
 use MoonShine\Laravel\Enums\Action;
 use MoonShine\UI\Components\ActionButton;
+use MoonShine\UI\Fields\DateRange;
+use MoonShine\UI\Fields\Url;
 
 /**
  * @extends ModelResource<Report>
@@ -25,7 +27,7 @@ class ReportResource extends ModelResource
     protected bool $detailInModal = true;
     protected bool $simplePaginate = true;
     protected bool $columnSelection = true;
-
+    protected int $itemsPerPage = 10;
 
     protected function activeActions(): ListOf
     {
@@ -35,6 +37,16 @@ class ReportResource extends ModelResource
             ->except(Action::CREATE)
             ->except(Action::UPDATE);
     }
+
+    public function indexComponents(): array
+{
+    return [
+        Pagination::make()
+            ->perPage($this->itemsPerPage)
+            ->simple($this->simplePaginate)
+            ->cursor($this->cursorPaginate),
+    ];
+}
 
     public function topButtons(): ListOf
     {
@@ -57,10 +69,9 @@ class ReportResource extends ModelResource
             ID::make()->sortable(),
             Text::make('Дата начала', 'start_date')->sortable(),
             Text::make('Дата окончания', 'end_date')->sortable(),
-            Text::make('Ссылка на таблицу', 'sheet_url')->sortable(),
+            Url::make('Ссылка на таблицу', 'sheet_url'),
             Text::make('Чат', 'chat.name')->sortable(),
             Text::make('Хэштег', 'hashtag.hashtag')->sortable(),
-
         ];
     }
 
@@ -73,9 +84,16 @@ class ReportResource extends ModelResource
             ID::make()->sortable(),
             Text::make('Дата начала', 'start_date')->sortable(),
             Text::make('Дата окончания', 'end_date')->sortable(),
-            Text::make('Ссылка на таблицу', 'sheet_url')->sortable(),
+            Url::make('Ссылка на таблицу', 'sheet_url'),
             Text::make('Чат', 'chat.name')->sortable(),
             Text::make('Хэштег', 'hashtag.hashtag')->sortable(),
+        ];
+    }
+
+    public function filters(): array
+    {
+        return [
+            DateRange::make('Created at')->withTime(),
         ];
     }
 }

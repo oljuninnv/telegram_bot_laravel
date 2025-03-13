@@ -20,8 +20,6 @@ class CreateManagerClientReport
     {
         $settings = Setting::latest()->first();
 
-        \Log::info($settings);
-
         if (!$settings) {
             return 'Настройки отсутствуют.';
         }

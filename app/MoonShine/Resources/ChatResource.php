@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Chat;
-
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\UI\Components\ActionButton;
-use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Text;
 use MoonShine\Contracts\UI\FieldContract;
-use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Support\ListOf;
 use MoonShine\Laravel\Enums\Action;
-use MoonShine\Contracts\UI\ActionButtonContract;
+use MoonShine\UI\Fields\Url;
 
 /**
  * @extends ModelResource<Chat>
@@ -29,6 +25,7 @@ class ChatResource extends ModelResource
     protected bool $cursorPaginate = true;
     protected bool $detailInModal = true;
     protected bool $simplePaginate = true;
+    protected int $itemsPerPage = 10;
     protected bool $columnSelection = true;
 
     protected function activeActions(): ListOf
@@ -48,7 +45,7 @@ class ChatResource extends ModelResource
         return [
             ID::make()->sortable(),
             Text::make('Name', 'name')->sortable(),
-            Text::make('Chat Link', 'chat_link')->sortable(),
+            Url::make('Ссылка на чат', 'chat_link'),
             Text::make('Chat ID', 'chat_id')->sortable(),
         ];
     }
@@ -66,7 +63,7 @@ class ChatResource extends ModelResource
         return [
             ID::make(),
             Text::make('Name', 'name'),
-            Text::make('Chat Link', 'chat_link'),
+            Url::make('Ссылка на чат', 'chat_link'),
             Text::make('Chat ID', 'chat_id'),
         ];
     }
