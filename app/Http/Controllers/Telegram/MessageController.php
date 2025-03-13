@@ -94,6 +94,9 @@ class MessageController extends Controller
             ]);
         }
 
+         // Очистка памяти
+         unset($update, $telegram, $user);
+
         return response(null, 200);
     }
 
