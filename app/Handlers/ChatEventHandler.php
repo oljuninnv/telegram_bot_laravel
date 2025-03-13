@@ -31,6 +31,8 @@ class ChatEventHandler
         $status = $chatMember?->newChatMember?->status;
         $chatId = $chatMember?->chat?->id;
         $userId = $chatMember?->from?->id;
+        $chatUpdateTitle = $update?->message?->new_chat_title;
+        $chatNewtLink = $update?->message?->chat?->username ? 't.me/' . $update?->message?->chat?->username : '';
 
         if ($chatId && $userId) {
             $user = TelegramUser::where('telegram_id', $userId)->first();
@@ -56,6 +58,7 @@ class ChatEventHandler
                     $this->sendMessage($telegram, $chatId, 'Для отправки отчётов необходимо записывать хэштеги: ' . $hashtagsText . '. Пример записи: #хэштег {ссылка на google таблицу} или прикрепите файл с отчётом с подписью #хэштег');
                     return 'Чат добавлен';
                 }
+
             } elseif ($status != 'left') {
                 $telegram->leaveChat(['chat_id' => $chatId]);
                 return 'Бот покинул чат';
@@ -78,10 +81,11 @@ class ChatEventHandler
                     $googleSheetUrl = $parts[1];
 
                     $allowedHashtagIds = Setting_Hashtag::pluck('hashtag_id')->toArray();
+                    
                     $hashtag = Hashtag::where('hashtag', $hashtagText)
                         ->whereIn('id', $allowedHashtagIds)
                         ->first();
-
+                        
                     if ($hashtag) {
                         $this->handleReportSubmission($telegram, $update, $hashtag, $googleSheetUrl);
                     }
@@ -105,6 +109,17 @@ class ChatEventHandler
                 }
             }
         }
+
+        
+        if($chatUpdateTitle){                
+            Chat::where('chat_id', $chatId)->update(['name' => $chatUpdateTitle]);
+        }
+        $chat = Chat::where('chat_id', $update?->message?->chat?->id)->where('chat_link',$chatNewtLink)->first();
+        if(!$chat)
+        {
+            Chat::where('chat_id', $update?->message?->chat?->id)->update(['chat_link' => $chatNewtLink]);
+        }
+
         return null;
     }
 

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use MoonShine\Laravel\Models\MoonshineUser;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class TelegramUser extends Model
 {
@@ -39,4 +41,9 @@ class TelegramUser extends Model
         'created_at',
         'updated_at',
     ];
+
+    public function MoonshineUser(): BelongsToMany
+    {
+        return $this->BelongsToMany(MoonshineUser::class);
+    }
 }

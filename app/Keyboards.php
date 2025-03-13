@@ -93,6 +93,19 @@ class Keyboards
             ]);
     }
 
+    public static function bindAdminKeyboard($user,$userId,$messageId = null): Keyboard
+    {
+        return Keyboard::make()->inline()
+            ->setResizeKeyboard(true)
+            ->setOneTimeKeyboard(true)
+            ->row([
+                Keyboard::button([
+                    'text' => 'Привязать аккаунт',
+                    'url' => env('WebHook_Url') . '/bind_account?user_id=' . $user->id . '&chat_id=' . $userId . '&message_id=' . $messageId,               
+                ]),
+            ]);
+    }
+
     public static function getDaysOfWeekKeyboard(bool $settingsExist = true): Keyboard
     {
         $keyboard = Keyboard::make()->inline();
@@ -211,7 +224,7 @@ class Keyboards
     {
         return Keyboard::make([
             'keyboard' => [
-                ['Добавить пользователя','Редактировать пользователя', 'Заблокировать пользователя'],
+                ['Добавить пользователя', 'Редактировать пользователя', 'Заблокировать пользователя'],
                 ['Назад'],
             ],
             'resize_keyboard' => true,

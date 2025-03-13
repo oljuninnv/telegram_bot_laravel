@@ -74,21 +74,20 @@ class MessageController extends Controller
         $user = TelegramUser::where('telegram_id', $chatId)->first();
 
         if (!$hasCommand && !$user->banned && ($user->role !== RoleEnum::USER->value)) {
-            if($user->role === RoleEnum::SUPER_ADMIN->value || $chatId == env('TELEGRAM_USER_ADMIN_ID'))
-            {
-                $this->handleUserState($telegram, $chatId, $userId, $messageText, $messageId);
-            }
-            else{
-                $handler = new MainStateHandler();
-                $handler->handle($telegram, $chatId, $userId, $messageText);
+            if ($messageText) {
+                if ($user->role === RoleEnum::SUPER_ADMIN->value || $chatId == env('TELEGRAM_USER_ADMIN_ID')) {
+                    $this->handleUserState($telegram, $chatId, $userId, $messageText, $messageId);
+                } else {
+                    $handler = new MainStateHandler();
+                    $handler->handle($telegram, $chatId, $userId, $messageText);
+                }
             }
         } else if (!$hasCommand && $user->role === RoleEnum::USER->value && !$user->banned) {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => 'Вам, как обычному пользователю, не доступен функционал бота. Обратитесь к администратору.',
             ]);
-        }
-        else if (!$hasCommand && $user->banned){
+        } else if (!$hasCommand && $user->banned) {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => 'Вы, заблокированы. Чтобы снять блокировку, обратитесь к администратору.',
