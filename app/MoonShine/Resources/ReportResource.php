@@ -93,7 +93,7 @@ class ReportResource extends ModelResource
     public function filters(): array
     {
         return [
-            DateRange::make('Created at')->withTime(),
+            DateRange::make('Created at'),
         ];
     }
 }
