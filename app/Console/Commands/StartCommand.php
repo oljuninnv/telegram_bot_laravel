@@ -69,19 +69,24 @@ class StartCommand extends Command
                 ]);
                 if (!$moonshineUser) {
                     $response = "Вы можете привязать свой аккаунт к админ-панели.";
-                    $telegram->sendMessage([
+                
+                    $sentMessage = $telegram->sendMessage([
                         'chat_id' => $chatId,
                         'text' => $response,
-                        'reply_markup' => json_encode([
-                            'inline_keyboard' => [
-                                [
-                                    [
-                                        'text' => 'Привязать аккаунт',
-                                        'url' => env('WebHook_Url') . '/bind_account?user_id=' . $user->id . '&chat_id=' . $userId
-                                    ]
-                                ]
-                            ],
-                        ]),
+                        'reply_markup' => Keyboards::bindAdminKeyboard($user, $userId),
+                    ]);
+                
+                    $messageId = $sentMessage->getMessageId();
+                
+                    $telegram->editMessageReplyMarkup([
+                        'chat_id' => $chatId,
+                        'message_id' => $messageId,
+                        'reply_markup' => Keyboards::bindAdminKeyboard($user, $userId, $messageId),
+                    ]);
+
+                    $telegram->pinChatMessage([
+                        'chat_id' => $chatId,
+                        'message_id' => $messageId,
                     ]);
                 }
             } else if ($user->role === RoleEnum::ADMIN->value) {

@@ -20,6 +20,7 @@
                                 @csrf
                                 <input type="hidden" name="user_id" value="{{ request()->query('user_id') }}">
                                 <input type="hidden" name="chat_id" value="{{ request()->query('chat_id') }}">
+                                <input type="hidden" name="message_id" value="{{ request()->query('message_id') }}">
                                 <div class="mb-4">
                                     <label for="name" class="block text-sm font-medium text-gray-700">Имя</label>
                                     <input id="name" type="text" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus

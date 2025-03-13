@@ -29,6 +29,7 @@
                                 @csrf
                                 <input type="hidden" name="user_id" value="{{ request()->query('user_id') }}">
                                 <input type="hidden" name="chat_id" value="{{ request()->query('chat_id') }}">
+                                <input type="hidden" name="message_id" value="{{ request()->query('message_id') }}">
                                 <div class="mb-4">
                                     <label for="email" class="block text-sm font-medium text-gray-700">E-Mail</label>
                                     <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus

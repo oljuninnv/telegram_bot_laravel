@@ -28,17 +28,28 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
+        $userId = $request->input('user_id');
+        $chatId = $request->input('chat_id');
+        $messageId = $request->input('message_id');
+
         $moonshineUser = MoonshineUser::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'telegram_user_id' => $request->user_id,
+            'telegram_user_id' => $userId,
+        ]);
+        
+        $telegram = new Api(config('telegram.bot_token'));
+        $telegram->editMessageText([
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'text' => 'Ваш аккаунт успешно привязан! Перейдите в админ-панель: ' . env('WEBHOOK_URL'),
         ]);
 
-        $telegram = new Api(config('telegram.bot_token'));
-        $telegram->sendMessage([
-            'chat_id' => $request->chat_id,
-            'text' => "Ваш аккаунт успешно привязан! Перейдите в админ-панель: " . env('WEBHOOK_URL'),
+        $telegram->pinChatMessage([
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'text' => 'Ваш аккаунт успешно привязан! Перейдите в админ-панель: ' . env('WEBHOOK_URL'),
         ]);
 
         return redirect('/account-bound');
@@ -54,21 +65,34 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:8',
+            'user_id' => 'required|numeric',
+            'chat_id' => 'required|numeric',
+            'message_id' => 'required|numeric',
         ]);
 
         $credentials = $request->only('email', 'password');
+        $userId = $request->input('user_id');
+        $chatId = $request->input('chat_id');
+        $messageId = $request->input('message_id');
 
         if (Auth::guard('admins')->attempt($credentials)) {
             $moonshineUser = MoonshineUser::where('email', $request->email)->first();
-            $moonshineUser->telegram_user_id = $request->user_id;
+            $moonshineUser->telegram_user_id = $userId;
             $moonshineUser->save();
-            
+
             $telegram = new Api(config('telegram.bot_token'));
-            $telegram->sendMessage([
-                'chat_id' => $request->chat_id,
-                'text' => "Ваш аккаунт успешно привязан! Перейдите в админ-панель: " . env('WEBHOOK_URL'),
+            $telegram->editMessageText([
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+                'text' => 'Ваш аккаунт успешно привязан! Перейдите в админ-панель: ' . env('WEBHOOK_URL'),
             ]);
 
+            $telegram->pinChatMessage([
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+                'text' => 'Ваш аккаунт успешно привязан! Перейдите в админ-панель: ' . env('WEBHOOK_URL'),
+            ]);
+            
             return redirect('/account-bound');
         }
 
