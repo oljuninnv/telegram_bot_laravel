@@ -50,14 +50,27 @@ class StartCommand extends Command
                 if ($user) {
                     $user->update(['telegram_id' => $chatId, 'first_name' => $firstName, 'last_name' => $lastName]);
                 } else {
-                    $user = TelegramUser::create([
-                        'telegram_id' => $userId,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName ?? null,
-                        'username' => $username ?? null,
-                        'role' => RoleEnum::SUPER_ADMIN->value,
-                        'banned' => false,
-                    ]);
+                    if($chatId == env('TELEGRAM_USER_ADMIN_ID'))
+                    {
+                        $user = TelegramUser::create([
+                            'telegram_id' => $userId,
+                            'first_name' => $firstName,
+                            'last_name' => $lastName ?? null,
+                            'username' => $username ?? null,
+                            'role' => RoleEnum::SUPER_ADMIN->value,
+                            'banned' => false,
+                        ]);
+                    } 
+                    else{
+                        $user = TelegramUser::create([
+                            'telegram_id' => $userId,
+                            'first_name' => $firstName,
+                            'last_name' => $lastName ?? null,
+                            'username' => $username ?? null,
+                            'role' => RoleEnum::USER->value,
+                            'banned' => false,
+                        ]);
+                    }                 
                 }
             }
             if ($user->role === RoleEnum::SUPER_ADMIN->value) {
