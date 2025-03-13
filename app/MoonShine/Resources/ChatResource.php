@@ -45,7 +45,7 @@ class ChatResource extends ModelResource
         return [
             ID::make()->sortable(),
             Text::make('Name', 'name')->sortable(),
-            Url::make('Ссылка на чат', 'chat_link'),
+            Url::make('Ссылка на чат', 'chat_link')->sortable(),
             Text::make('Chat ID', 'chat_id')->sortable(),
         ];
     }
