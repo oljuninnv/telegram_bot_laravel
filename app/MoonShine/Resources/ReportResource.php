@@ -15,8 +15,6 @@ use MoonShine\Laravel\Enums\Action;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Fields\DateRange;
 use MoonShine\UI\Fields\Url;
-use MoonShine\Support\AlpineJs;
-use MoonShine\Support\Enums\JsEvent;
 
 /**
  * @extends ModelResource<Report>
@@ -53,8 +51,7 @@ class ReportResource extends ModelResource
     public function managerClientReport()
     {
         $reportAction = new CreateManagerClientReport();
-        $message = $reportAction->execute();
-        return "alert('" . addslashes($message) . "'); window.location.reload();";
+        $reportAction->execute();
     }
 
     /**
@@ -79,11 +76,11 @@ class ReportResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            Text::make('Дата начала', 'start_date')->sortable(),
-            Text::make('Дата окончания', 'end_date')->sortable(),
+            Text::make('Дата начала', 'start_date'),
+            Text::make('Дата окончания', 'end_date'),
             Url::make('Ссылка на таблицу', 'sheet_url'),
-            Text::make('Чат', 'chat.name')->sortable(),
-            Text::make('Хэштег', 'hashtag.hashtag')->sortable(),
+            Text::make('Чат', 'chat.name'),
+            Text::make('Хэштег', 'hashtag.hashtag'),
         ];
     }
 
