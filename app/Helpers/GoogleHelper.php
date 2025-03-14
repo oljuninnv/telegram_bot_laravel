@@ -5,66 +5,63 @@ namespace App\Helpers;
 use Google\Client;
 use Google\Service\Sheets;
 use Google\Service\Sheets\ClearValuesRequest;
+use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
+use Google\Service\Sheets\ValueRange;
 
 trait GoogleHelper
 {
+    private static $googleClient = null;
 
-    /**
-     * Возвращает настроенный клиент Google.
-     */
     protected function getGoogleClient(): Client
     {
-        $client = new Client();
-        $client->setApplicationName(env('GOOGLE_APPLICATION_NAME'));
-        $client->setScopes(Sheets::SPREADSHEETS);
-        $client->setAuthConfig(env('GOOGLE_SERVICE_ACCOUNT_JSON_LOCATION'));
-        $client->setAccessType('offline');
-
-        return $client;
+        if (self::$googleClient === null) {
+            self::$googleClient = new Client();
+            self::$googleClient->setApplicationName(config('services.google.application_name'));
+            self::$googleClient->setScopes(Sheets::SPREADSHEETS);
+            self::$googleClient->setAuthConfig(config('services.google.service_account_json_location'));
+            self::$googleClient->setAccessType('offline');
+        }
+        return self::$googleClient;
     }
 
-    /**
-     * Создает новый лист в Google таблице.
-     */
-    protected function createGoogleSheet(Sheets $service, string $spreadsheetId, string $sheetName): void
+    protected function getOrCreateSheet(Sheets $service, string $spreadsheetId, string $sheetName): void
     {
-        $batchUpdateRequest = new \Google\Service\Sheets\BatchUpdateSpreadsheetRequest([
-            'requests' => [
-                'addSheet' => [
-                    'properties' => [
-                        'title' => $sheetName
+        if (!$this->checkIfSheetExists($service, $spreadsheetId, $sheetName)) {
+            $batchUpdateRequest = new BatchUpdateSpreadsheetRequest([
+                'requests' => [
+                    'addSheet' => [
+                        'properties' => [
+                            'title' => $sheetName
+                        ]
                     ]
                 ]
-            ]
-        ]);
-
-        $service->spreadsheets->batchUpdate($spreadsheetId, $batchUpdateRequest);
+            ]);
+            $service->spreadsheets->batchUpdate($spreadsheetId, $batchUpdateRequest);
+        } else {
+            $range = $sheetName . '!A1:Z1000';
+            $service->spreadsheets_values->clear(
+                $spreadsheetId,
+                $range,
+                new ClearValuesRequest()
+            );
+        }
     }
 
-    /**
-     * Заполняет лист данными.
-     */
     protected function fillGoogleSheet(Sheets $service, string $spreadsheetId, string $sheetName, array $data): void
     {
         $range = $sheetName . '!A1';
-        $body = new \Google\Service\Sheets\ValueRange(['values' => $data]);
-        $service->spreadsheets_values->append($spreadsheetId, $range, $body, ['valueInputOption' => 'RAW']);
+        $body = new ValueRange(['values' => $data]);
+        $service->spreadsheets_values->append(
+            $spreadsheetId,
+            $range,
+            $body,
+            ['valueInputOption' => 'RAW']
+        );
     }
-
-    protected function clearSheet(Sheets $service, string $spreadsheetId, string $sheetName): void
-    {
-        $range = $sheetName . '!A1:Z1000';
-        $clearRequest = new ClearValuesRequest();
-        $service->spreadsheets_values->clear($spreadsheetId, $range, $clearRequest);
-    }
-
-    /**
-     * Проверяет, существует ли лист с указанным названием.
-     */
 
     protected function checkIfSheetExists(Sheets $service, string $spreadsheetId, string $sheetName): bool
     {
-        $spreadsheet = $service->spreadsheets->get($spreadsheetId);
+        $spreadsheet = $service->spreadsheets->get($spreadsheetId, ['fields' => 'sheets.properties.title']);
         foreach ($spreadsheet->getSheets() as $sheet) {
             if ($sheet->getProperties()->getTitle() === $sheetName) {
                 return true;

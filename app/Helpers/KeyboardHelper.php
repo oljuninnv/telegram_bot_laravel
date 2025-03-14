@@ -45,5 +45,4 @@ trait KeyboardHelper
 
         return $keyboard;
     }
-
 }

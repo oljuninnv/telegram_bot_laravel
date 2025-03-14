@@ -13,6 +13,7 @@ use App\Models\Report;
 use Carbon\Carbon;
 use App\Models\TelegramUser;
 use App\Enums\RoleEnum;
+use Illuminate\Support\Facades\Log;
 
 class MainStateHandler
 {
@@ -20,57 +21,60 @@ class MainStateHandler
 
     public function handle(Api $telegram, int $chatId, int $userId, string $messageText)
     {
-        $user = TelegramUser::where('telegram_id', $chatId)->first();
-        if ($user->role == RoleEnum::SUPER_ADMIN->value) {
-            switch ($messageText) {
-                case 'Получить список чатов':
-                    $this->handleGetChatsList($telegram, $chatId);
-                    break;
+        try {
+            $user = TelegramUser::where('telegram_id', $chatId)->first();
+            if ($user->role == RoleEnum::SUPER_ADMIN->value) {
+                switch ($messageText) {
+                    case 'Получить список чатов':
+                        $this->handleGetChatsList($telegram, $chatId);
+                        break;
 
-                case 'Настройки':
-                    $this->handleReportSettings($telegram, $chatId, $userId);
-                    break;
+                    case 'Настройки':
+                        $this->handleReportSettings($telegram, $chatId, $userId);
+                        break;
 
-                case 'Проверить отчеты':
-                    $this->handleCheckReports($telegram, $chatId);
-                    break;
+                    case 'Проверить отчеты':
+                        $this->handleCheckReports($telegram, $chatId);
+                        break;
 
-                case 'Помощь':
-                    $this->handleHelp($telegram, $chatId,$user);
-                    break;
+                    case 'Помощь':
+                        $this->handleHelp($telegram, $chatId, $user);
+                        break;
 
-                default:
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
-                        'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
-                    ]);
-                    break;
+                    default:
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
+                            'reply_markup' => Keyboards::mainSuperAdminKeyboard(),
+                        ]);
+                        break;
+                }
+            } else {
+                switch ($messageText) {
+                    case 'Получить список чатов':
+                        $this->handleGetChatsList($telegram, $chatId);
+                        break;
+
+                    case 'Проверить отчеты':
+                        $this->handleCheckReports($telegram, $chatId);
+                        break;
+
+                    case 'Помощь':
+                        $this->handleHelp($telegram, $chatId, $user);
+                        break;
+
+                    default:
+                        $telegram->sendMessage([
+                            'chat_id' => $chatId,
+                            'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
+                            'reply_markup' => Keyboards::mainAdminKeyboard(),
+                        ]);
+                        break;
+                }
             }
-        } else {
-            switch ($messageText) {
-                case 'Получить список чатов':
-                    $this->handleGetChatsList($telegram, $chatId);
-                    break;
-
-                case 'Проверить отчеты':
-                    $this->handleCheckReports($telegram, $chatId);
-                    break;
-
-                case 'Помощь':
-                    $this->handleHelp($telegram, $chatId,$user);
-                    break;
-
-                default:
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => 'Неизвестная команда. Пожалуйста, выберите действие из меню.',
-                        'reply_markup' => Keyboards::mainAdminKeyboard(),
-                    ]);
-                    break;
-            }
+        } catch (\Exception $e) {
+            Log::error('Error in MainStateHandler: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         }
-
     }
 
     private function handleGetChatsList(Api $telegram, int $chatId)

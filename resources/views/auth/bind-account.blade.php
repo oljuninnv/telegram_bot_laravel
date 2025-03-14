@@ -47,7 +47,7 @@
                                 </div>
                             </form>
                             <div class="mt-4 text-center">
-                                <p class="text-sm text-red-600">Нет аккаунта? <a href="{{ route('bind_register', ['user_id' => request()->query('user_id'), 'chat_id' => request()->query('chat_id')]) }}" class="text-indigo-600 hover:text-indigo-500">Зарегистрируйтесь</a></p>
+                                <p>Нет аккаунта? <a href="{{ route('bind_register', ['user_id' => request()->query('user_id'), 'chat_id' => request()->query('chat_id'), 'message_id' => request()->query('message_id')]) }}" class="text-indigo-600 hover:text-indigo-500">Зарегистрируйтесь</a></p>
                             </div>
                         </div>
                     </div>

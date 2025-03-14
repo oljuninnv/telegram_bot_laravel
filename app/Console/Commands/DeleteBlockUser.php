@@ -3,35 +3,27 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\TelegramUser;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DeleteBlockUser extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'delete_ban_user:send';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Удаляет заблокированных пользователей срок блокировки, которых больше 2-ух недель';
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        $users = TelegramUser::where('banned', true)->where('updated_at', '<', now()->subDays(14))->get();
+        try {
+            DB::table('telegram_user')
+                ->where('banned', true)
+                ->where('updated_at', '<', now()->subDays(14))
+                ->delete();
 
-        foreach ($users as $user) {
-            $user->delete();
-        }
+            $this->info("Заблокированные пользователи успешно удалены.");
 
-        $this->info('Заблокированные пользователи успешно удалены.');
+        } catch (\Exception $e) {
+            Log::error('Error in DeleteBlockUser command: ' . $e->getMessage());
+            $this->error('Произошла ошибка при удалении пользователей.');
+        } 
     }
 }

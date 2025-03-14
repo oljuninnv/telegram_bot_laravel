@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Models\Hashtag;
 use App\Models\Setting_Hashtag;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
 
 trait HashtagHelper
 {
@@ -15,14 +16,9 @@ trait HashtagHelper
      */
     public function getAllHashtags(): string
     {
-        $hashtags = Hashtag::all();
-        $hashtagList = [];
-
-        foreach ($hashtags as $hashtag) {
-            $hashtagList[] = $hashtag->hashtag;
-        }
-
-        return implode(', ', $hashtagList);
+        return Cache::remember('all_hashtags', 3600, function () {
+            return Hashtag::pluck('hashtag')->implode(', ');
+        });
     }
 
     /**
@@ -39,10 +35,6 @@ trait HashtagHelper
             ->pluck('hashtag.hashtag')
             ->toArray();
 
-        if (!empty($attachedHashtags)) {
-            return implode(', ', $attachedHashtags);
-        }
-
-        return 'Нет подключённых хэштегов';
+        return !empty($attachedHashtags) ? implode(', ', $attachedHashtags) : 'Нет подключённых хэштегов';
     }
 }

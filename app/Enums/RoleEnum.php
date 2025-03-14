@@ -9,16 +9,12 @@ enum RoleEnum: string
     case SUPER_ADMIN = 'super-admin';
 
     /**
-     * Получить все возможные роли.
+     * Получить все роли в виде массива значений.
      *
      * @return array
      */
     public static function getAllRoles(): array
     {
-        return [
-            self::USER->value,
-            self::ADMIN->value,
-            self::SUPER_ADMIN->value,
-        ];
+        return array_column(self::cases(), 'value');
     }
 }

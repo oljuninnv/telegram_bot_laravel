@@ -16,16 +16,9 @@ class Keyboards
         return Keyboard::make()
             ->setResizeKeyboard(true)
             ->setOneTimeKeyboard(true)
-            ->row([
-                Keyboard::button('Получить список чатов'),
-            ])
-            ->row([
-                Keyboard::button('Настройки'),
-                Keyboard::button('Проверить отчеты'),
-            ])
-            ->row([
-                Keyboard::button('Помощь'),
-            ]);
+            ->row([Keyboard::button('Получить список чатов')])
+            ->row([Keyboard::button('Настройки'), Keyboard::button('Проверить отчеты')])
+            ->row([Keyboard::button('Помощь')]);
     }
 
     public static function mainAdminKeyboard(): Keyboard
@@ -33,15 +26,9 @@ class Keyboards
         return Keyboard::make()
             ->setResizeKeyboard(true)
             ->setOneTimeKeyboard(true)
-            ->row([
-                Keyboard::button('Получить список чатов'),
-            ])
-            ->row([
-                Keyboard::button('Проверить отчеты'),
-            ])
-            ->row([
-                Keyboard::button('Помощь'),
-            ]);
+            ->row([Keyboard::button('Получить список чатов')])
+            ->row([Keyboard::button('Проверить отчеты')])
+            ->row([Keyboard::button('Помощь')]);
     }
 
     public static function settingsAdminKeyboard(): Keyboard
@@ -93,7 +80,7 @@ class Keyboards
             ]);
     }
 
-    public static function bindAdminKeyboard($user,$userId,$messageId = null): Keyboard
+    public static function bindAdminKeyboard($user, $userId, $messageId = null): Keyboard
     {
         return Keyboard::make()->inline()
             ->setResizeKeyboard(true)
@@ -101,7 +88,7 @@ class Keyboards
             ->row([
                 Keyboard::button([
                     'text' => 'Привязать аккаунт',
-                    'url' => env('WebHook_Url') . '/bind_account?user_id=' . $user->id . '&chat_id=' . $userId . '&message_id=' . $messageId,               
+                    'url' => env('WebHook_Url') . '/bind_account?user_id=' . $user->id . '&chat_id=' . $userId . '&message_id=' . $messageId,
                 ]),
             ]);
     }
