@@ -15,6 +15,8 @@ use MoonShine\Laravel\Enums\Action;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Fields\DateRange;
 use MoonShine\UI\Fields\Url;
+use MoonShine\Support\AlpineJs;
+use MoonShine\Support\Enums\JsEvent;
 
 /**
  * @extends ModelResource<Report>
@@ -38,26 +40,21 @@ class ReportResource extends ModelResource
             ->except(Action::UPDATE);
     }
 
-    public function indexComponents(): array
-{
-    return [
-        Pagination::make()
-            ->perPage($this->itemsPerPage)
-            ->simple($this->simplePaginate)
-            ->cursor($this->cursorPaginate),
-    ];
-}
-
     public function topButtons(): ListOf
     {
+
         return parent::topButtons()->add(
             ActionButton::make('Отчёт Менеджер-Клиент')
-                ->onClick(function () {
-                    $reportAction = new CreateManagerClientReport();
-                    $message = $reportAction->execute();
-                    return "alert('" . addslashes($message) . "');";
-                })
+                ->method('managerClientReport')
         );
+
+    }
+
+    public function managerClientReport()
+    {
+        $reportAction = new CreateManagerClientReport();
+        $message = $reportAction->execute();
+        return "alert('" . addslashes($message) . "'); window.location.reload();";
     }
 
     /**

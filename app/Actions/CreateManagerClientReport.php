@@ -9,7 +9,6 @@ use App\Models\Hashtag;
 use App\Models\Chat;
 use Carbon\Carbon;
 use Google\Service\Sheets;
-use Google\Service\Sheets\ClearValuesRequest;
 use Google\Client;
 
 class CreateManagerClientReport
@@ -24,26 +23,20 @@ class CreateManagerClientReport
             return 'Настройки отсутствуют.';
         }
 
-        // Извлекаем настройки
-        $reportDay = $settings->report_day;
         $reportTime = $settings->report_time;
         $weeksInPeriod = $settings->weeks_in_period;
         $currentPeriodEndDate = Carbon::parse($settings->current_period_end_date);
 
-        // Вычисляем startDate
         $startDate = $currentPeriodEndDate->copy()
             ->subWeeks($weeksInPeriod)
             ->setTimeFromTimeString($reportTime);
 
-        // Получаем хэштеги, связанные с настройками
         $hashtags = Hashtag::whereHas('Setting_Hashtag', function ($query) use ($settings) {
             $query->where('setting_id', $settings->id);
         })->get();
 
-        // Данные для Google таблицы
         $googleSheetData = [['Хэштег', 'Заголовок отчета', 'Ссылки на чаты']];
 
-        // Формируем отчёт для каждого хэштега
         foreach ($hashtags as $hashtag) {
             $reportDetails = Report::where('hashtag_id', $hashtag->id)
                 ->whereBetween('created_at', [$startDate, $currentPeriodEndDate])
@@ -72,13 +65,11 @@ class CreateManagerClientReport
             ];
         }
 
-        // Создаем Google таблицу
         $client = new Client();
         $client->setApplicationName(env('GOOGLE_APPLICATION_NAME'));
         $client->setScopes(Sheets::SPREADSHEETS);
         $client->setAuthConfig(storage_path('credentials.json'));
         $client->setAccessType('offline');
-        $service = new Sheets($client);
         $service = new Sheets($client);
 
         $spreadsheetId = config('services.google.sheet_id');
@@ -88,19 +79,8 @@ class CreateManagerClientReport
 
         $sheetName = $startDate->format('d.m.Y H:i') . ' - ' . $currentPeriodEndDate->format('d.m.Y H:i');
 
-        // Проверяем, существует ли лист с таким названием
-        $sheetExists = $this->checkIfSheetExists($service, $spreadsheetId, $sheetName);
-
-        if ($sheetExists) {
-            // Если лист существует, очищаем его и обновляем данные
-            $this->clearSheet($service, $spreadsheetId, $sheetName);
-            $this->fillGoogleSheet($service, $spreadsheetId, $sheetName, $googleSheetData);
-            return 'Отчёт успешно обновлён.';
-        } else {
-            // Если лист не существует, создаем новый
-            $this->createGoogleSheet($service, $spreadsheetId, $sheetName);
-            $this->fillGoogleSheet($service, $spreadsheetId, $sheetName, $googleSheetData);
-            return 'Отчёт успешно создан и отправлен.';
-        }
+        $this->getOrCreateSheet($service, $spreadsheetId, $sheetName);
+        $this->fillGoogleSheet($service, $spreadsheetId, $sheetName, $googleSheetData);
+        return 'Отчёт успешно сформирован.';
     }
 }
