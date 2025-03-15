@@ -4,10 +4,8 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
+use App\Jobs\DeleteBlockUserJob;
+use App\Jobs\SendReportsJob;
 
 class Kernel extends ConsoleKernel
 {
@@ -16,27 +14,15 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('delete_ban_user:send')->hourly();
+        $schedule->call(function () {
+            DeleteBlockUserJob::dispatch();
+        });
 
-        try {
-            $endDate = Cache::remember('current_period_end_date', 3600, function () {
-                return DB::table('settings')
-                    ->orderBy('id', 'desc')
-                    ->value('current_period_end_date');
-            });
+        $schedule->call(function () {
+            SendReportsJob::dispatch();
+        });
 
-            if (!$endDate) {
-                Log::warning('Settings not found in Kernel schedule.');
-                return;
-            }
-
-            $schedule->command('reports:send')
-                ->when(function () use ($endDate) {
-                    return Carbon::now()->startOfHour()->greaterThanOrEqualTo($endDate);
-                })->hourly();
-        } catch (\Exception $e) {
-            Log::error('Error in Kernel schedule: ' . $e->getMessage());
-        }
+        $schedule->command('cache:clear')->dailyAt('00:00');
     }
 
     /**

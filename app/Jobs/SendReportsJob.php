@@ -1,31 +1,31 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Jobs;
 
-use Illuminate\Console\Command;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Telegram\Bot\Api;
 use App\Enums\DayOfWeekEnums;
 use App\Enums\RoleEnum;
 use Google\Service\Sheets;
 use App\Helpers\GoogleHelper;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Foundation\Bus\Dispatchable;
 
-class SendReports extends Command
+class SendReportsJob implements ShouldQueue
 {
-    use GoogleHelper;
-
-    protected $signature = 'reports:send';
-    protected $description = 'Отправляет данные об отчётах за текущий период';
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, GoogleHelper;
 
     public function handle()
     {
         try {
             $settings = DB::table('settings')->orderBy('id', 'desc')->first();
             if (!$settings) {
-                $this->error('Настройки отсутствуют.');
                 Log::warning('Настройки отсутствуют.');
                 return;
             }
@@ -33,11 +33,10 @@ class SendReports extends Command
             $currentPeriodEndDate = Carbon::parse($settings->current_period_end_date);
 
             // Проверка времени
-            // if (!Carbon::now()->startOfHour()->greaterThanOrEqualTo($currentPeriodEndDate)) {
-            //     $this->info('Время для отправки отчёта ещё не наступило.');
-            //     Log::info('Время для отправки отчёта ещё не наступило.');
-            //     return;
-            // }
+            if (!Carbon::now()->startOfHour()->greaterThanOrEqualTo($currentPeriodEndDate)) {
+                Log::info('Время для отправки отчёта ещё не наступило.');
+                return;
+            }
 
             $reportDay = $settings->report_day;
             $reportTime = $settings->report_time;
@@ -120,7 +119,6 @@ class SendReports extends Command
 
             $spreadsheetId = config('services.google.sheet_id');
             if (empty($spreadsheetId)) {
-                $this->error('GOOGLE_SHEET_ID не задан в .env');
                 Log::error('GOOGLE_SHEET_ID не задан в .env');
                 return;
             }
@@ -139,11 +137,10 @@ class SendReports extends Command
                 ]);
             }
 
-            $this->info('Отчёт успешно отправлен.');
+            Log::info('Отчёт успешно отправлен.');
         } catch (\Exception $e) {
-            Log::error('Ошибка в SendReports: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            $this->error('Произошла ошибка при отправке отчёта: ' . $e->getMessage());
-        } 
+            Log::error('Ошибка в SendReportsJob: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+        }
     }
 
     protected function updatePeriodEndDate($settings, Carbon $currentPeriodEndDate, int $weeksInPeriod, string $reportDay, string $reportTime): void
