@@ -53,8 +53,8 @@ class ReportResource extends ModelResource
         $reportAction = new CreateManagerClientReport();
         $result = $reportAction->execute();
         return MoonShineJsonResponse::make()
-            ->toast('Отчёт успешно сформирован', ToastType::SUCCESS)
-            ->redirect($result);
+            ->toast('Отчёт успешно сформирован', ToastType::SUCCESS);
+            // ->redirect($result)
     }
 
     /**
