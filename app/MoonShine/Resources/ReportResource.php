@@ -15,6 +15,8 @@ use MoonShine\Laravel\Enums\Action;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Fields\DateRange;
 use MoonShine\UI\Fields\Url;
+use MoonShine\Laravel\Http\Responses\MoonShineJsonResponse;
+use MoonShine\Support\Enums\ToastType;
 
 /**
  * @extends ModelResource<Report>
@@ -40,18 +42,19 @@ class ReportResource extends ModelResource
 
     public function topButtons(): ListOf
     {
-
         return parent::topButtons()->add(
             ActionButton::make('Отчёт Менеджер-Клиент')
                 ->method('managerClientReport')
         );
-
     }
 
-    public function managerClientReport()
+    public function managerClientReport():MoonShineJsonResponse
     {
         $reportAction = new CreateManagerClientReport();
-        $reportAction->execute();
+        $result = $reportAction->execute();
+        return MoonShineJsonResponse::make()
+            ->toast('Отчёт успешно сформирован', ToastType::SUCCESS)
+            ->redirect($result);
     }
 
     /**

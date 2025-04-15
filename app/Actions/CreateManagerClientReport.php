@@ -81,6 +81,18 @@ class CreateManagerClientReport
 
         $this->getOrCreateSheet($service, $spreadsheetId, $sheetName);
         $this->fillGoogleSheet($service, $spreadsheetId, $sheetName, $googleSheetData);
-        return 'Отчёт успешно сформирован.';
+
+        return 'https://docs.google.com/spreadsheets/d/' . $spreadsheetId . '/edit#gid=' . $this->getSheetId($service, $spreadsheetId, $sheetName);
+    }
+
+    protected function getSheetId(Sheets $service, string $spreadsheetId, string $sheetName): int
+    {
+        $spreadsheet = $service->spreadsheets->get($spreadsheetId);
+        foreach ($spreadsheet->getSheets() as $sheet) {
+            if ($sheet->getProperties()->getTitle() === $sheetName) {
+                return $sheet->getProperties()->getSheetId();
+            }
+        }
+        throw new \RuntimeException("Sheet {$sheetName} not found");
     }
 }

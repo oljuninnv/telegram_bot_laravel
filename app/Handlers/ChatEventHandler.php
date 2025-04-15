@@ -73,7 +73,6 @@ class ChatEventHandler
                     $parts = explode(' ', $messageText);
 
                     if (count($parts) < 2) {
-                        $this->sendMessage($telegram, $update->message->chat->id, 'Неверный формат сообщения. Пример: #хэштег {ссылка на google таблицу}');
                         return;
                     }
 
